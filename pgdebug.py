@@ -6,11 +6,13 @@ import pygame
 if not pygame.get_init():
     pygame.init()
 
-font = pygame.font.SysFont(None, 50)
+font = pygame.font.SysFont(None, 25)
+
+prev_x, prev_y = 0, 0
 
 
-def pgdebug(surface: Surface, text: Any):
+def pgdebug(surface: Surface, text: Any, shift=0):
     textsurf = font.render(f"{text}", True, (255, 255, 255))
-    position_x = int((surface.width - textsurf.width) / 2)
-    position_y = int((surface.height - textsurf.height) / 2)
+    position_x = int((surface.width - (1 + shift) * textsurf.width) / 2)
+    position_y = int((surface.height - (1 + shift) * textsurf.height) / 2)
     surface.blit(textsurf, (position_x, position_y))

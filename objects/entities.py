@@ -1,13 +1,14 @@
 import pygame
 from typing import TYPE_CHECKING, List, Tuple
 from constants import BASE_SPEED
+from pgdebug import pgdebug
 
 if TYPE_CHECKING:
     from game import Game
     from tilemap import Tilemap
 
 
-class PhysicsEntites:
+class PhysicsEntity:
     def __init__(
         self, game: "Game", etype: str, pos: List[int], size: Tuple[int, int]
     ) -> None:
@@ -16,38 +17,54 @@ class PhysicsEntites:
         self.pos = list(pos)
         self.size = size
         self.velocity = pygame.Vector2(0, 0)
+        self.collisions = {"up": False, "down": False, "left": False, "right": False}
 
     @property
     def rect(self):
         return pygame.Rect(self.pos, self.size)
 
     def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
+        self.collisions = {"up": False, "down": False, "left": False, "right": False}
+
         frame_movement_x = (movement[0] + (self.velocity.x)) * (dt * BASE_SPEED)
         frame_movement_y = (movement[1] + (self.velocity.y)) * (dt * BASE_SPEED)
 
-        self.pos[0] += frame_movement_x
+        self.pos[0] += frame_movement_x  # type:ignore
         entity_rect = self.rect
-        for rect in tilemap.physics_rect_around(self.pos):  # type: ignore
+        physics_rects_around = tilemap.physics_rects_around(self.pos)
+
+        for rect in physics_rects_around:  # type: ignore
             if entity_rect.colliderect(rect):
                 if frame_movement_x > 0:
                     entity_rect.right = rect.left
+                    self.collisions["right"] = True
                 if frame_movement_x < 0:
                     entity_rect.left = rect.right
+                    self.collisions["left"] = True
                 self.pos[0] = entity_rect.x
 
-        self.pos[1] += frame_movement_y
+        self.pos[1] += frame_movement_y  # type: ignore
         entity_rect = self.rect
-        for rect in tilemap.physics_rect_around(self.pos):  # type: ignore
+        for rect in physics_rects_around:  # type: ignore
             if entity_rect.colliderect(rect):
                 if frame_movement_y < 0:
                     entity_rect.top = rect.bottom
+                    self.collisions["up"] = True
                 if frame_movement_y > 0:
                     entity_rect.bottom = rect.top
+                    self.collisions["down"] = True
                 self.pos[1] = entity_rect.y
+        self.velocity.y = min(5, (self.velocity.y + 0.1))
+        if self.collisions["down"]:
+            self.velocity.y = 0
 
-        self.velocity.y = min(
-            5 * BASE_SPEED * dt, BASE_SPEED * dt * (self.velocity.y + 0.1)
-        )
+        probe_rect = self.rect.move(0, 1)
+
+        for rect in physics_rects_around:
+            if probe_rect.colliderect(rect):
+                self.collisions["down"] = True
+                break
 
     def render(self, surface: pygame.Surface):
+        pgdebug(surface, f"{self.collisions}")
         surface.blit(self.game.assets["player"], self.pos)

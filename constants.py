@@ -8,7 +8,7 @@ ASSETS_PATH = BASE_PATH / "assets" / "data" / "images"
 FPS = 60
 SCREEN_WIDTH = 700
 SCREEN_HEIGHT = 500
-BASE_SPEED = 100
+BASE_SPEED = 80
 
 
 @dataclass

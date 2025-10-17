@@ -1,6 +1,6 @@
 import pygame
 from constants import ASSETS_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
-from objects.entities import PhysicsEntites
+from objects.entities import PhysicsEntity
 from objects.tilemap import Tilemap
 from utils.image_utils import load_image, load_key_images
 
@@ -18,8 +18,9 @@ class Game:
 
         # game assets
         TILE_SIZE = (32, 32)
+        self.tilesize = TILE_SIZE
         self.assets = {
-            "player": load_image(ASSETS_PATH / "entities" / "player.png", 2.5),
+            "player": load_image(ASSETS_PATH / "entities" / "player.png", 2),
             "grass": load_key_images(ASSETS_PATH / "tiles" / "grass", TILE_SIZE),
             "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", TILE_SIZE),
             "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", TILE_SIZE),
@@ -33,7 +34,7 @@ class Game:
         }
 
         # player
-        self.player = PhysicsEntites(
+        self.player = PhysicsEntity(
             self, "player", [150, 50], self.assets["player"].size
         )
 
@@ -49,19 +50,19 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     self.movement[0] = True
-                if event.key == pygame.K_RIGHT:
+                elif event.key == pygame.K_RIGHT:
                     self.movement[1] = True
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
                     self.movement[0] = False
-                if event.key == pygame.K_RIGHT:
+                elif event.key == pygame.K_RIGHT:
                     self.movement[1] = False
+                if event.key == pygame.K_SPACE:
+                    self.player.velocity.y -= 3
 
     def update(self, dt: float):
         movement = (self.movement[1] - self.movement[0], 0)
-        print(movement)
         self.player.update(dt, self.tilemap, movement)
-        print(self.tilemap.physics_rect_around(self.player.pos))  # type:ignore
 
     def draw(self):
         self.tilemap.render(self.screen)
