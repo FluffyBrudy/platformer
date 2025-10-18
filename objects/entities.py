@@ -1,7 +1,7 @@
 import pygame
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, Union
 from constants import BASE_SPEED
-from pgdebug import pgdebug
+from pgdebug import pgdebug, pgdebug_rect
 
 if TYPE_CHECKING:
     from game import Game
@@ -31,9 +31,8 @@ class PhysicsEntity:
 
         self.pos[0] += frame_movement_x  # type:ignore
         entity_rect = self.rect
-        physics_rects_around = tilemap.physics_rects_around(self.pos)
 
-        for rect in physics_rects_around:  # type: ignore
+        for rect in tilemap.physics_rects_around(self.pos):  # type: ignore
             if entity_rect.colliderect(rect):
                 if frame_movement_x > 0:
                     entity_rect.right = rect.left
@@ -45,7 +44,7 @@ class PhysicsEntity:
 
         self.pos[1] += frame_movement_y  # type: ignore
         entity_rect = self.rect
-        for rect in physics_rects_around:  # type: ignore
+        for rect in tilemap.physics_rects_around(self.pos):  # type: ignore
             if entity_rect.colliderect(rect):
                 if frame_movement_y < 0:
                     entity_rect.top = rect.bottom
@@ -60,11 +59,21 @@ class PhysicsEntity:
 
         probe_rect = self.rect.move(0, 1)
 
-        for rect in physics_rects_around:
+        for rect in tilemap.physics_rects_around(self.pos):  # type: ignore
             if probe_rect.colliderect(rect):
                 self.collisions["down"] = True
                 break
 
-    def render(self, surface: pygame.Surface):
-        pgdebug(surface, f"{self.collisions}")
-        surface.blit(self.game.assets["player"], self.pos)
+    def jump(self, energy=0.0):
+        if self.collisions["down"]:
+            self.velocity.y = -3 - abs(energy)
+
+    def render(
+        self,
+        surface: pygame.Surface,
+        offset: Union[pygame.Vector2, Tuple[float, float]],
+    ):
+        pgdebug(surface, f"{self.collisions}", 0, 1)
+        pos = (self.pos[0] - offset[0], self.pos[1] - offset[1])
+        surface.blit(self.game.assets["player"], pos)
+        pgdebug_rect(surface, (*pos, *self.size))

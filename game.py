@@ -2,6 +2,7 @@ import pygame
 from constants import ASSETS_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from objects.entities import PhysicsEntity
 from objects.tilemap import Tilemap
+from pgdebug import Debug, pgdebug
 from utils.image_utils import load_image, load_key_images
 
 # from pprint import pprint
@@ -18,7 +19,6 @@ class Game:
 
         # game assets
         TILE_SIZE = (32, 32)
-        self.tilesize = TILE_SIZE
         self.assets = {
             "player": load_image(ASSETS_PATH / "entities" / "player.png", 2),
             "grass": load_key_images(ASSETS_PATH / "tiles" / "grass", TILE_SIZE),
@@ -28,7 +28,9 @@ class Game:
                 ASSETS_PATH / "tiles" / "large_decor", TILE_SIZE
             ),
             "spawners": load_key_images(ASSETS_PATH / "tiles" / "spawners"),
-            "background": load_image(ASSETS_PATH / "background.png"),
+            "background": load_image(
+                ASSETS_PATH / "background.png", (SCREEN_WIDTH, SCREEN_HEIGHT)
+            ),
             "gun": load_image(ASSETS_PATH / "gun.png"),
             "projectile": load_image(ASSETS_PATH / "projectile.png"),
         }
@@ -40,7 +42,8 @@ class Game:
 
         # tilemap
         self.tilemap = Tilemap(self, TILE_SIZE[0])
-        self.tilemap.render(self.screen)
+
+        self.scroll = pygame.math.Vector2(0, 0)
 
     def handle_event(self):
         for event in pygame.event.get():
@@ -58,23 +61,28 @@ class Game:
                 elif event.key == pygame.K_RIGHT:
                     self.movement[1] = False
                 if event.key == pygame.K_SPACE:
-                    self.player.velocity.y -= 3
+                    self.player.jump(energy=0.5)
 
     def update(self, dt: float):
         movement = (self.movement[1] - self.movement[0], 0)
         self.player.update(dt, self.tilemap, movement)
 
+        prev_scroll = self.scroll.x
+        target_scroll_x = self.player.rect.centerx - self.screen.width / 2
+        self.scroll.x = round(prev_scroll + (target_scroll_x - prev_scroll) * 0.1, 2)
+
     def draw(self):
-        self.tilemap.render(self.screen)
-        self.player.render(self.screen)
+        self.tilemap.render(self.screen, offset=self.scroll)
+        self.player.render(self.screen, offset=self.scroll)
 
     def run(self):
         while self.running:
             dt = self.clock.tick(FPS) / 1000.0
-            self.screen.fill(Color.BG_COLOR)
+            self.screen.blit(self.assets["background"], (0, 0))
             self.handle_event()
             self.update(dt)
             self.draw()
+            Debug.draw_all(self.screen)
             pygame.display.flip()
         pygame.quit()
 

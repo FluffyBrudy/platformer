@@ -1,9 +1,12 @@
-from pygame import Rect, Surface
-from typing import Dict, List, Literal, NamedTuple, Sequence, Tuple
+from pygame import Rect
+from typing import Dict, List, Literal, NamedTuple, Tuple, Union
 from typing import TYPE_CHECKING
+
+from pgdebug import pgdebug_rect
 
 
 if TYPE_CHECKING:
+    from pygame import Vector2, Surface
     from game import Game
 
 
@@ -67,11 +70,23 @@ class Tilemap:
 
         return physics_tiles
 
-    def render(self, surface: Surface):
+    def render(
+        self,
+        surface: "Surface",
+        offset: Union["Vector2", Tuple[float, float]],
+    ):
         for tile in self.offgrid_tiles:
+            tile_pos = (
+                tile.pos[0] * self.tile_size - offset[0],
+                tile.pos[1] * self.tile_size - offset[1],
+            )
             surface.blit(self.game.assets[tile.ttype][str(tile.variant)], tile.pos)
 
         for location in self.tilemap:
             tile = self.tilemap[location]
-            tile_pos = location[0] * self.tile_size, location[1] * self.tile_size
+            tile_pos = (
+                location[0] * self.tile_size - offset[0],
+                location[1] * self.tile_size - offset[1],
+            )
             surface.blit(self.game.assets[tile.ttype][str(tile.variant)], tile_pos)
+            pgdebug_rect(surface, (*tile_pos, self.tile_size, self.tile_size))
