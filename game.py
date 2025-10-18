@@ -1,9 +1,10 @@
 import pygame
 from constants import ASSETS_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
+from objects.cloud import CloudGroup
 from objects.entities import PhysicsEntity
 from objects.tilemap import Tilemap
 from pgdebug import Debug, pgdebug
-from utils.image_utils import load_image, load_key_images
+from utils.image_utils import load_image, load_images, load_key_images
 
 # from pprint import pprint
 
@@ -21,6 +22,7 @@ class Game:
         TILE_SIZE = (32, 32)
         self.assets = {
             "player": load_image(ASSETS_PATH / "entities" / "player.png", 2),
+            "clouds": load_images(ASSETS_PATH / "clouds"),
             "grass": load_key_images(ASSETS_PATH / "tiles" / "grass", TILE_SIZE),
             "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", TILE_SIZE),
             "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", TILE_SIZE),
@@ -37,13 +39,17 @@ class Game:
 
         # player
         self.player = PhysicsEntity(
-            self, "player", [150, 50], self.assets["player"].size
+            self, "player", (150, 50), self.assets["player"].size
         )
 
         # tilemap
         self.tilemap = Tilemap(self, TILE_SIZE[0])
 
+        # camera
         self.scroll = pygame.math.Vector2(0, 0)
+
+        # cloud groups
+        self.clouds = CloudGroup(self.assets["clouds"])
 
     def handle_event(self):
         for event in pygame.event.get():
@@ -60,18 +66,27 @@ class Game:
                     self.movement[0] = False
                 elif event.key == pygame.K_RIGHT:
                     self.movement[1] = False
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_UP:
                     self.player.jump(energy=0.5)
 
     def update(self, dt: float):
         movement = (self.movement[1] - self.movement[0], 0)
         self.player.update(dt, self.tilemap, movement)
+        self.clouds.update(dt)
+        self.camera_movement()
 
-        prev_scroll = self.scroll.x
+    def camera_movement(self):
         target_scroll_x = self.player.rect.centerx - self.screen.width / 2
-        self.scroll.x = round(prev_scroll + (target_scroll_x - prev_scroll) * 0.1, 2)
+        target_scroll_y = self.player.rect.centery - self.screen.height / 2
+        self.scroll.x = round(
+            self.scroll.x + (target_scroll_x - self.scroll.x) * 0.1, 2
+        )
+        self.scroll.y = round(
+            self.scroll.y + (target_scroll_y - self.scroll.y) * 0.1, 2
+        )
 
     def draw(self):
+        self.clouds.render(self.screen, offset=self.scroll)
         self.tilemap.render(self.screen, offset=self.scroll)
         self.player.render(self.screen, offset=self.scroll)
 
