@@ -1,7 +1,7 @@
 import pygame
-from constants import ASSETS_PATH, BASE_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import ASSETS_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from objects.cloud import CloudGroup
-from objects.entities import PhysicsEntity
+from objects.entities import Player
 from objects.tilemap import Tilemap
 from pgdebug import Debug, pgdebug
 from utils.animation import Animation
@@ -23,7 +23,7 @@ class Game:
         # game assets
         self.assets = {
             "player": load_image(
-                (ASSETS_PATH / "entities" / "player.png"),
+                ASSETS_PATH / "entities" / "player.png",
                 2,
                 Color.BLACK,
             ),
@@ -41,26 +41,41 @@ class Game:
             "gun": load_image(ASSETS_PATH / "gun.png"),
             "projectile": load_image(ASSETS_PATH / "projectile.png"),
             "player/idle": Animation(
-                load_images(ASSETS_PATH / "entities" / "player" / "idle")
+                load_images(
+                    ASSETS_PATH / "entities" / "player" / "idle",
+                    scale=1.8,
+                )
             ),
             "player/run": Animation(
-                load_images(ASSETS_PATH / "entities" / "player" / "run")
+                load_images(
+                    ASSETS_PATH / "entities" / "player" / "run",
+                    scale=1.8,
+                )
             ),
             "player/jump": Animation(
-                load_images(ASSETS_PATH / "entities" / "player" / "jump")
+                load_images(
+                    ASSETS_PATH / "entities" / "player" / "jump",
+                    scale=1.8,
+                )
             ),
             "player/slide": Animation(
-                load_images(ASSETS_PATH / "entities" / "player" / "slide")
+                load_images(
+                    ASSETS_PATH / "entities" / "player" / "slide",
+                    scale=1.8,
+                )
             ),
             "player/wallslide": Animation(
-                load_images(ASSETS_PATH / "entities" / "player" / "wall_slide")
+                load_images(
+                    ASSETS_PATH / "entities" / "player" / "wall_slide",
+                    scale=1.8,
+                )
             ),
         }
 
+        print(self.assets["player"].size)
+
         # player
-        self.player = PhysicsEntity(
-            self, "player", (150, 50), self.assets["player"].size
-        )
+        self.player = Player(self, "player", (150, 50), self.assets["player"].size)
 
         # tilemap
         self.tilemap = Tilemap(self, TILE_SIZE[0])
@@ -102,7 +117,7 @@ class Game:
             self.scroll.x + (target_scroll_x - self.scroll.x) * 0.1, 2
         )
         self.scroll.y = round(
-            self.scroll.y + (target_scroll_y - self.scroll.y) * 0.1, 2
+            self.scroll.y + (target_scroll_y - self.scroll.y) * 0.5, 2
         )
         pgdebug(
             self.screen,
@@ -122,7 +137,7 @@ class Game:
             self.handle_event()
             self.update(dt)
             self.draw()
-            Debug.draw_all(self.screen)
+            # Debug.draw_all(self.screen)
             pygame.display.flip()
         pygame.quit()
 

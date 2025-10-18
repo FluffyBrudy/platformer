@@ -1,11 +1,15 @@
+from enum import Enum, auto
 import pygame
-from typing import TYPE_CHECKING, List, Tuple, Union
+from typing import TYPE_CHECKING, List, Literal, Tuple, Union
 from constants import BASE_SPEED
 from pgdebug import pgdebug, pgdebug_rect
 
 if TYPE_CHECKING:
     from game import Game
     from tilemap import Tilemap
+    from utils.animation import Animation
+
+TActions = Literal["idle", "jump", "slide", "run", "wallslide", ""]
 
 
 class PhysicsEntity:
@@ -19,9 +23,19 @@ class PhysicsEntity:
         self.velocity = pygame.Vector2(0, 0)
         self.collisions = {"up": False, "down": False, "left": False, "right": False}
 
+        self.action: TActions = ""
+        self.flipped = False
+        self.set_action("idle")
+
     @property
     def rect(self):
         return pygame.Rect(self.pos, self.size)
+
+    def set_action(self, action: TActions):
+        if self.action != action:
+            self.action = action
+            self.animation: "Animation" = self.game.assets[f"player/{action}"]
+            self.size = self.animation.get_frame().size
 
     def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
         self.collisions = {"up": False, "down": False, "left": False, "right": False}
@@ -64,9 +78,12 @@ class PhysicsEntity:
                 self.collisions["down"] = True
                 break
 
-    def jump(self, energy=0.0, debug=True):
-        if self.collisions["down"] or debug:
-            self.velocity.y = -3 - abs(energy)
+        if movement[0] < 0:
+            self.flipped = True
+        elif movement[0] > 0:
+            self.flipped = False
+
+        self.animation.update()
 
     def render(
         self,
@@ -75,5 +92,30 @@ class PhysicsEntity:
     ):
         pgdebug(surface, f"entity.py: {self.collisions}", 1)
         pos = (self.pos[0] - offset[0], self.pos[1] - offset[1])
-        surface.blit(self.game.assets["player"], pos)
+        img = self.animation.get_frame()
+        if self.flipped:
+            img = pygame.transform.flip(img, True, False)
+        surface.blit(img, pos)
         pgdebug_rect(surface, (*pos, *self.size))
+
+
+class Player(PhysicsEntity):
+    def __init__(
+        self, game: "Game", etype: str, pos: Tuple[int, int], size: Tuple[int, int]
+    ) -> None:
+        super().__init__(game, etype, pos, size)
+        self.air_time = 0
+
+    def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
+        super().update(dt, tilemap, movement)
+
+        if self.collisions["down"]:
+            if movement[0] != 0:
+                self.set_action("run")
+            else:
+                self.set_action("idle")
+
+    def jump(self, energy=0.0, debug=True):
+        if self.collisions["down"] or debug:
+            self.set_action("jump")
+            self.velocity.y = -3 - abs(energy)

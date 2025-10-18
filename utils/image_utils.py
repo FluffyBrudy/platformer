@@ -31,7 +31,12 @@ def load_image(
         sys.exit(1)
 
 
-def load_images(dir_path: Path, scale: Union[Tuple[float, float], float] = 1):
+def load_images(
+    dir_path: Path,
+    scale: Union[Tuple[float, float], float] = 1,
+    colorkey=Color.BLACK,
+    trim_space=False,
+):
     if not dir_path.exists():
         print(f"[WARNING]: directory {dir_path} not found")
         sys.exit(1)
@@ -39,7 +44,7 @@ def load_images(dir_path: Path, scale: Union[Tuple[float, float], float] = 1):
         [path for path in dir_path.iterdir() if path.suffix == ".png"],
         key=get_numeric_sort_key,
     )
-    return [load_image(img, scale) for img in sorted_path]
+    return [load_image(img, scale, colorkey, trim_space) for img in sorted_path]
 
 
 def load_key_images(
@@ -47,6 +52,8 @@ def load_key_images(
     scale: Union[Tuple[float, float], float] = 1,
     key_index: Union[Sequence[int], Tuple[int]] = (0,),
     /,
+    trim_space=False,
+    colorkey=Color.BLACK,
 ):
     """
     Loads images from dictionary with key as first character of file.
@@ -67,7 +74,10 @@ def load_key_images(
     )
     st_index = key_index[0]
     end_index = max(st_index + 1, len(key_index) - 1)
-    return {img.stem[st_index:end_index]: load_image(img, scale) for img in sorted_path}
+    return {
+        img.stem[st_index:end_index]: load_image(img, scale, colorkey, trim_space)
+        for img in sorted_path
+    }
 
 
 """
