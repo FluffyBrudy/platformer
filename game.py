@@ -4,6 +4,7 @@ from objects.cloud import CloudGroup
 from objects.entities import PhysicsEntity
 from objects.tilemap import Tilemap
 from pgdebug import Debug, pgdebug
+from utils.animation import Animation
 from utils.image_utils import load_image, load_images, load_key_images
 from constants import TILE_SIZE
 
@@ -21,7 +22,11 @@ class Game:
 
         # game assets
         self.assets = {
-            "player": load_image(ASSETS_PATH / "entities" / "player.png", 2),
+            "player": load_image(
+                (ASSETS_PATH / "entities" / "player.png"),
+                2,
+                Color.BLACK,
+            ),
             "clouds": load_images(ASSETS_PATH / "clouds"),
             "grass": load_key_images(ASSETS_PATH / "tiles" / "grass", TILE_SIZE),
             "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", TILE_SIZE),
@@ -35,6 +40,21 @@ class Game:
             ),
             "gun": load_image(ASSETS_PATH / "gun.png"),
             "projectile": load_image(ASSETS_PATH / "projectile.png"),
+            "player/idle": Animation(
+                load_images(ASSETS_PATH / "entities" / "player" / "idle")
+            ),
+            "player/run": Animation(
+                load_images(ASSETS_PATH / "entities" / "player" / "run")
+            ),
+            "player/jump": Animation(
+                load_images(ASSETS_PATH / "entities" / "player" / "jump")
+            ),
+            "player/slide": Animation(
+                load_images(ASSETS_PATH / "entities" / "player" / "slide")
+            ),
+            "player/wallslide": Animation(
+                load_images(ASSETS_PATH / "entities" / "player" / "wall_slide")
+            ),
         }
 
         # player

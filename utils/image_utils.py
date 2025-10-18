@@ -4,19 +4,21 @@ import pygame
 from pathlib import Path
 from typing import Sequence, Tuple, Union
 from constants import Color
+from PIL import Image
+import numpy as np
 
 
 def load_image(
     path: Path,
     scale_ratio_or_size: Union[Tuple[float, float], float] = 1.0,
-    colorkey=Color.BLACK,
+    colorkey: Tuple[int, int, int, int] = Color.BLACK,
+    trim_space=False,
 ):
     if not path.exists():
         print(f"[WARNING]: {path} not found")
         sys.exit(1)
 
-    image = pygame.image.load(path).convert_alpha()
-    image.set_colorkey(colorkey)
+    image = load_pil_img_to_pygame_surf_np(path, colorkey[:3], trim_space)
 
     if type(scale_ratio_or_size) == float or type(scale_ratio_or_size) == int:
         scaled_image = pygame.transform.scale_by(image, scale_ratio_or_size)
@@ -103,3 +105,24 @@ def get_numeric_sort_key(filepath: Union[Path, str]) -> Tuple[float, str]:
     number = int(match.group()) if match else float("inf")
 
     return (number, filepath)
+
+
+def load_pil_img_to_pygame_surf_np(
+    path: Path,
+    colorkey: Tuple[int, int, int],
+    trim_space=False,
+):
+    im = Image.open(path).convert("RGBA")
+    arr = np.array(im)
+
+    mask = (arr[..., :3] == colorkey).all(axis=-1) | (arr[..., 3] == 0)
+    arr[mask, 3] = 0
+
+    if trim_space:
+        alpha = arr[..., 3]
+        ys, xs = np.nonzero(alpha)
+        if ys.size > 0 and xs.size > 0:
+            arr = arr[ys.min() : ys.max() + 1, xs.min() : xs.max() + 1]
+
+    surf = pygame.image.frombuffer(arr.tobytes(), arr.shape[1::-1], "RGBA")
+    return surf
