@@ -15,3 +15,4 @@ BASE_SPEED = 80
 class Color:
     BG_COLOR = (14, 219, 248, 255)
     BLACK = (0, 0, 0, 255)
+    RED = (255, 0, 0, 255)
