@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 class PhysicsEntity:
     def __init__(
-        self, game: "Game", etype: str, pos: List[int], size: Tuple[int, int]
+        self, game: "Game", etype: str, pos: Tuple[int, int], size: Tuple[int, int]
     ) -> None:
         self.game = game
         self.type = etype
