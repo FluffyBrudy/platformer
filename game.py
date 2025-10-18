@@ -1,10 +1,11 @@
 import pygame
-from constants import ASSETS_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import ASSETS_PATH, BASE_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from objects.cloud import CloudGroup
 from objects.entities import PhysicsEntity
 from objects.tilemap import Tilemap
 from pgdebug import Debug, pgdebug
 from utils.image_utils import load_image, load_images, load_key_images
+from constants import TILE_SIZE
 
 # from pprint import pprint
 
@@ -19,7 +20,6 @@ class Game:
         self.movement = [False, False]
 
         # game assets
-        TILE_SIZE = (32, 32)
         self.assets = {
             "player": load_image(ASSETS_PATH / "entities" / "player.png", 2),
             "clouds": load_images(ASSETS_PATH / "clouds"),
@@ -83,6 +83,11 @@ class Game:
         )
         self.scroll.y = round(
             self.scroll.y + (target_scroll_y - self.scroll.y) * 0.1, 2
+        )
+        pgdebug(
+            self.screen,
+            f"game.py: {self.scroll.x // TILE_SIZE[0]}, {self.screen.width // TILE_SIZE[1] + 1}",
+            2,
         )
 
     def draw(self):

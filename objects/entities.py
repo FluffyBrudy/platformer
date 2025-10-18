@@ -64,8 +64,8 @@ class PhysicsEntity:
                 self.collisions["down"] = True
                 break
 
-    def jump(self, energy=0.0):
-        if self.collisions["down"]:
+    def jump(self, energy=0.0, debug=True):
+        if self.collisions["down"] or debug:
             self.velocity.y = -3 - abs(energy)
 
     def render(
@@ -73,7 +73,7 @@ class PhysicsEntity:
         surface: pygame.Surface,
         offset: Union[pygame.Vector2, Tuple[float, float]],
     ):
-        pgdebug(surface, f"{self.collisions}", 0, 1)
+        pgdebug(surface, f"entity.py: {self.collisions}", 1)
         pos = (self.pos[0] - offset[0], self.pos[1] - offset[1])
         surface.blit(self.game.assets["player"], pos)
         pgdebug_rect(surface, (*pos, *self.size))

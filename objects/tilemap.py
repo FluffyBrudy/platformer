@@ -2,7 +2,8 @@ from pygame import Rect
 from typing import Dict, List, Literal, NamedTuple, Tuple, Union
 from typing import TYPE_CHECKING
 
-from pgdebug import pgdebug_rect
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH
+from pgdebug import pgdebug, pgdebug_rect
 
 
 if TYPE_CHECKING:
@@ -80,13 +81,31 @@ class Tilemap:
                 tile.pos[0] * self.tile_size - offset[0],
                 tile.pos[1] * self.tile_size - offset[1],
             )
-            surface.blit(self.game.assets[tile.ttype][str(tile.variant)], tile.pos)
-
-        for location in self.tilemap:
-            tile = self.tilemap[location]
-            tile_pos = (
-                location[0] * self.tile_size - offset[0],
-                location[1] * self.tile_size - offset[1],
-            )
             surface.blit(self.game.assets[tile.ttype][str(tile.variant)], tile_pos)
-            pgdebug_rect(surface, (*tile_pos, self.tile_size, self.tile_size))
+
+        start_x = int(offset[0] // self.tile_size)
+        end_x = start_x + (SCREEN_WIDTH // self.tile_size + 2)
+        start_y = int(offset[1] // self.tile_size)
+        end_y = start_y + (SCREEN_HEIGHT // self.tile_size + 2)
+        count = 0
+        for x in range(start_x, end_x):
+            for y in range(start_y, end_y):
+                location = (x, y)
+                if location in self.tilemap:
+                    tile = self.tilemap[location]
+                    tile_pos = (
+                        location[0] * self.tile_size - offset[0],
+                        location[1] * self.tile_size - offset[1],
+                    )
+                    surface.blit(
+                        self.game.assets[tile.ttype][str(tile.variant)], tile_pos
+                    )
+                    pgdebug_rect(surface, (*tile_pos, self.tile_size, self.tile_size))
+                    count += 1
+        pgdebug(
+            surface,
+            f"tilemap.py: count={count},"
+            f"{int(start_x*self.tile_size-offset[0])}, {int(end_x*self.tile_size-offset[0])},"
+            f"{int(start_y*self.tile_size-offset[1])}, {int(end_y*self.tile_size-offset[1])}",
+            3,
+        )
