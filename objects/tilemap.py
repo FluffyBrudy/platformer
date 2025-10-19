@@ -9,6 +9,7 @@ from pgdebug import pgdebug, pgdebug_rect
 if TYPE_CHECKING:
     from pygame import Vector2, Surface
     from game import Game
+    from editor import TTileTypes
 
 
 NEIGHBOUR_OFFSET = [
@@ -25,9 +26,10 @@ NEIGHBOUR_OFFSET = [
 
 
 class Tile(NamedTuple):
-    ttype: Literal["grass", "water", "stone"]
+    ttype: "TTileTypes"
     pos: tuple[int, int]
     variant: int
+    rotaion: int = 0
 
     @staticmethod
     def is_physics_tile(tile: "Tile"):
@@ -39,7 +41,7 @@ class Tilemap:
         self.game = game
         self.tile_size = tile_size
         self.tilemap: Dict[Tuple[int, int], Tile] = {}
-        self.offgrid_tiles: List[Tile] = []
+        self.offgrid_tiles: set[Tile] = set()
 
         for i in range(10):
             grass_loc = (3 + i, 10)
@@ -78,8 +80,8 @@ class Tilemap:
     ):
         for tile in self.offgrid_tiles:
             tile_pos = (
-                tile.pos[0] * self.tile_size - offset[0],
-                tile.pos[1] * self.tile_size - offset[1],
+                tile.pos[0] - offset[0],
+                tile.pos[1] - offset[1],
             )
             surface.blit(self.game.assets[tile.ttype][str(tile.variant)], tile_pos)
 
@@ -102,10 +104,3 @@ class Tilemap:
                     )
                     pgdebug_rect(surface, (*tile_pos, self.tile_size, self.tile_size))
                     count += 1
-        pgdebug(
-            surface,
-            f"tilemap.py: count={count},"
-            f"{int(start_x*self.tile_size-offset[0])}, {int(end_x*self.tile_size-offset[0])},"
-            f"{int(start_y*self.tile_size-offset[1])}, {int(end_y*self.tile_size-offset[1])}",
-            3,
-        )

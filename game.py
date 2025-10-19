@@ -28,12 +28,10 @@ class Game:
                 Color.BLACK,
             ),
             "clouds": load_images(ASSETS_PATH / "clouds"),
-            "grass": load_key_images(ASSETS_PATH / "tiles" / "grass", TILE_SIZE),
-            "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", TILE_SIZE),
-            "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", TILE_SIZE),
-            "largedecor": load_key_images(
-                ASSETS_PATH / "tiles" / "large_decor", TILE_SIZE
-            ),
+            "grass": load_key_images(ASSETS_PATH / "tiles" / "grass", 2),
+            "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", 2),
+            "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", 2),
+            "largedecor": load_key_images(ASSETS_PATH / "tiles" / "large_decor", 2),
             "spawners": load_key_images(ASSETS_PATH / "tiles" / "spawners"),
             "background": load_image(
                 ASSETS_PATH / "background.png", (SCREEN_WIDTH, SCREEN_HEIGHT)

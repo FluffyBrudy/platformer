@@ -6,7 +6,7 @@ from constants import Color
 if not pygame.get_init():
     pygame.init()
 
-font = pygame.font.SysFont(None, 25)
+font = pygame.font.SysFont(None, 15)
 
 _DEBUG_REFS = []
 
@@ -40,8 +40,8 @@ class Debug:
                 w, h = surface.get_size()
                 rw, rh = surf.get_size()
                 x = (w - rw) // 2
-                # highest priority (i=0) is centered, others stacked upward
-                y = (h - rh) // 2 - i * spacing
+                # y = (h - rh) // 2 - i * spacing
+                y = i * spacing
                 surface.blit(surf, (x, y))
 
         # Then draw all other registered debug shapes (rects etc.)
@@ -56,7 +56,7 @@ class Debug:
         _DEBUG_REFS.clear()
 
 
-def pgdebug(surface: pygame.Surface, text: Any, priority=0):
+def pgdebug(text: Any, priority=0):
     """Draw stacked debug text: highest priority in center, others above."""
     textsurf = font.render(str(text), True, (255, 255, 255))
     Debug.add(
