@@ -1,9 +1,11 @@
 from typing import Callable, Dict, Literal, Optional, Tuple
 import pygame
+import json
 from pygame import Event
 from constants import ASSETS_PATH, Color, SCREEN_HEIGHT, SCREEN_WIDTH, TILE_SIZE
 from objects.tilemap import Tile, Tilemap
 from utils.image_utils import load_key_images
+from widget import NotificationBar, ToggleSlider
 
 
 TEventMapKey = Tuple[int, Optional[int]]
@@ -74,16 +76,61 @@ class Editor:
             (pygame.KEYUP, pygame.K_DOWN): lambda e: self.set_move(3, False),
             (pygame.KEYDOWN, pygame.K_r): lambda e: self.set_tile_rotation(-1),
             (pygame.KEYDOWN, pygame.K_g): lambda _: self.toggle_ongrid(),
+            (pygame.KEYDOWN, pygame.K_s): lambda e: self.handle_hotkey(e.key),
         }
 
         # Global mouse pos
         self.mouse_pos = pygame.mouse.get_pos()
 
+        # some extra widgets just for help
+        self.font = pygame.font.SysFont(None, 15)
+        self.ongrid_toggle = ToggleSlider(
+            (SCREEN_WIDTH - 55, 0),
+            (55, 25),
+            ["ongrid", "ongrid"],
+            self.font,
+            self.toggle_ongridbtn_callback,
+        )
+        self.notification_bar = NotificationBar(self.screen)
+
+    def save(self):
+        self.notification_bar.display_start("saving map data...")
+        try:
+            with open("mapdata.json", "w") as fp:
+                serialized_tilemap_data = {
+                    ",".join(map(str, k)): v._asdict()
+                    for k, v in self.tilemap.tilemap.items()
+                }
+                json.dump(
+                    {
+                        "tilemap": serialized_tilemap_data,
+                        "offgrid": list(self.tilemap.offgrid_tiles),
+                        "tile_size": (TILE_SIZE, TILE_SIZE),
+                    },
+                    fp,
+                    indent=4,
+                )
+                self.notification_bar.display_end()
+        except json.JSONDecodeError:
+            print("bad json chunks")
+
+    def toggle_ongridbtn_callback(self):
+        """callback for ongrid_toggle button only
+        not intended for regular use
+        """
+        self.ongrid = not self.ongrid
+
     def toggle_ongrid(self):
         self.ongrid = not self.ongrid
+        self.ongrid_toggle.toggle()
 
     def stop(self) -> None:
         self.running = False
+
+    def handle_hotkey(self, key: int):
+        mods = pygame.key.get_mods()
+        if mods & pygame.KMOD_CTRL and key == pygame.K_s:
+            self.save()
 
     def handle_mouse_click(self, state: bool, button: Literal["left", "right"]) -> None:
         if button == "left":
@@ -191,6 +238,7 @@ class Editor:
         self.left_just_released = False
         self.right_just_released = False
         for event in pygame.event.get():
+            self.ongrid_toggle.handle_event(event)
             event_attr = getattr(event, "key", None) or getattr(event, "button", None)
             unary_event = self.event_map.get((event.type, None))
             handler = self.event_map.get((event.type, event_attr)) or unary_event
@@ -199,6 +247,12 @@ class Editor:
 
     def update(self) -> None:
         self.mouse_pos = pygame.mouse.get_pos()
+
+        self.ongrid_toggle.update()
+        self.camera_movement()
+
+        if self.ongrid_toggle.is_hovered():
+            return
 
         if self.ongrid and self.left_pressed:
             self.plot_tile_ongrid()
@@ -209,14 +263,17 @@ class Editor:
         elif not self.ongrid and self.right_just_released:
             self.remove_tile_offgrid()
 
-        self.camera_movement()
-
     def draw(self) -> None:
         self.tilemap.render(self.screen, self.scroll)
+        self.ongrid_toggle.draw(self.screen)
+
+        if self.ongrid_toggle.is_hovered():
+            return
         if self.ongrid:
             self.preview_selected_ongrid_tile()
         else:
             self.preview_selected_offgrid_tile()
+        self.notification_bar.draw()
 
     def run(self) -> None:
         while self.running:

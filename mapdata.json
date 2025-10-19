@@ -1,0 +1,186 @@
+{
+    "tilemap": {
+        "3,10": {
+            "ttype": "grass",
+            "pos": [
+                3,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,5": {
+            "ttype": "stone",
+            "pos": [
+                10,
+                5
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "4,10": {
+            "ttype": "grass",
+            "pos": [
+                4,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,6": {
+            "ttype": "stone",
+            "pos": [
+                10,
+                6
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "5,10": {
+            "ttype": "grass",
+            "pos": [
+                5,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,7": {
+            "ttype": "stone",
+            "pos": [
+                10,
+                7
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "6,10": {
+            "ttype": "grass",
+            "pos": [
+                6,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,8": {
+            "ttype": "stone",
+            "pos": [
+                10,
+                8
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "7,10": {
+            "ttype": "grass",
+            "pos": [
+                7,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,9": {
+            "ttype": "stone",
+            "pos": [
+                10,
+                9
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "8,10": {
+            "ttype": "grass",
+            "pos": [
+                8,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,10": {
+            "ttype": "grass",
+            "pos": [
+                10,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "9,10": {
+            "ttype": "grass",
+            "pos": [
+                9,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,11": {
+            "ttype": "stone",
+            "pos": [
+                10,
+                11
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,12": {
+            "ttype": "stone",
+            "pos": [
+                10,
+                12
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "11,10": {
+            "ttype": "grass",
+            "pos": [
+                11,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,13": {
+            "ttype": "stone",
+            "pos": [
+                10,
+                13
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "12,10": {
+            "ttype": "grass",
+            "pos": [
+                12,
+                10
+            ],
+            "variant": 1,
+            "rotaion": 0
+        },
+        "10,14": {
+            "ttype": "stone",
+            "pos": [
+                10,
+                14
+            ],
+            "variant": 1,
+            "rotaion": 0
+        }
+    },
+    "offgrid": [],
+    "tile_size": [
+        [
+            32,
+            32
+        ],
+        [
+            32,
+            32
+        ]
+    ]
+}
