@@ -1,5 +1,6 @@
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Dict, List, Tuple, TypedDict
 
 BASE_PATH = Path(__file__).parent
 ASSETS_PATH = BASE_PATH / "assets" / "data" / "images"

@@ -99,7 +99,8 @@ class NotificationBar:
         self.alpha = 255
         self.y_offset = -self.height
 
-    def display_end(self):
+    def display_end(self, msg=""):
+        self.message = msg
         self.fade_start = pygame.time.get_ticks()
 
     def ease_out_cubic(self, t: float):

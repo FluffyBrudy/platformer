@@ -1,5 +1,5 @@
 from pygame import Rect
-from typing import Dict, List, Literal, NamedTuple, Tuple, Union
+from typing import Dict, List, Literal, NamedTuple, Tuple, TypedDict, Union, cast
 from typing import TYPE_CHECKING
 
 from constants import SCREEN_HEIGHT, SCREEN_WIDTH
@@ -43,11 +43,42 @@ class Tilemap:
         self.tilemap: Dict[Tuple[int, int], Tile] = {}
         self.offgrid_tiles: set[Tile] = set()
 
-        for i in range(10):
-            grass_loc = (3 + i, 10)
-            stone_loc = (10, 5 + i)
-            self.tilemap[grass_loc] = Tile("grass", grass_loc, 1)
-            self.tilemap[stone_loc] = Tile("stone", stone_loc, 1)
+    def set_tilemap(self, tilemap: Dict[str, dict]):
+        """
+        Sets the internal tilemap from a dictionary of tile data.
+
+        External format:
+            dict[str, dict] with keys like "x,y", values like
+            {'ttype': 'grass', 'pos': [x,y], 'variant': 0, 'rotaion': 0}
+
+        Converts to internal format:
+            Dict[Tuple[int,int], Tile]
+        """
+        for key, tile_data in tilemap.items():
+            pos = cast(Tuple[int, int], tuple(int(n) for n in key.split(",")))
+            tile_data["pos"] = list(pos)
+            self.tilemap[pos] = Tile(
+                ttype=tile_data["ttype"],
+                pos=pos,
+                variant=tile_data.get("variant", 0),
+                rotaion=tile_data.get("rotaion", 0),
+            )
+
+    def set_offgrid_tiles(self, offgrid_tiles: list[list]):
+        """
+        Sets offgrid tiles from external serialized list format:
+            list of lists: [ttype:str, pos:[x,y], variant:int, rotaion:int]
+
+        Converts to internal format:
+            set[Tile]
+        """
+        self.offgrid_tiles = set(
+            Tile(ttype=t[0], pos=tuple(t[1]), variant=t[2], rotaion=t[3])
+            for t in offgrid_tiles
+        )
+
+    def set_tilesize(self, tile_size: Tuple[int, int]):
+        self.tile_size = tile_size[0]
 
     def tiles_around(self, pos: Tuple[int, int]) -> List[Tile]:
         tiles = []

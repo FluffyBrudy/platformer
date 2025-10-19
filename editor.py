@@ -1,12 +1,25 @@
-from typing import Callable, Dict, Literal, Optional, Tuple
+from json.decoder import JSONDecodeError
+from pathlib import Path
+from typing import TYPE_CHECKING, Callable, Dict, Literal, Optional, Tuple, cast
+from numpy import tile
 import pygame
 import json
 from pygame import Event
-from constants import ASSETS_PATH, Color, SCREEN_HEIGHT, SCREEN_WIDTH, TILE_SIZE
+from constants import (
+    ASSETS_PATH,
+    BASE_PATH,
+    Color,
+    SCREEN_HEIGHT,
+    SCREEN_WIDTH,
+    TILE_SIZE,
+)
 from objects.tilemap import Tile, Tilemap
 from utils.image_utils import load_key_images
 from widget import NotificationBar, ToggleSlider
 
+
+if TYPE_CHECKING:
+    from objects.tilemap import Tile
 
 TEventMapKey = Tuple[int, Optional[int]]
 TEventMapValue = Callable[[Event], None]
@@ -93,26 +106,28 @@ class Editor:
         )
         self.notification_bar = NotificationBar(self.screen)
 
+        self.load()
+
     def save(self):
         self.notification_bar.display_start("saving map data...")
         try:
-            with open("mapdata.json", "w") as fp:
-                serialized_tilemap_data = {
-                    ",".join(map(str, k)): v._asdict()
-                    for k, v in self.tilemap.tilemap.items()
-                }
-                json.dump(
-                    {
-                        "tilemap": serialized_tilemap_data,
-                        "offgrid": list(self.tilemap.offgrid_tiles),
-                        "tile_size": (TILE_SIZE, TILE_SIZE),
-                    },
-                    fp,
-                    indent=4,
-                )
-                self.notification_bar.display_end()
+            dump_mapdata(self.tilemap)
+            self.notification_bar.display_end("success")
         except json.JSONDecodeError:
             print("bad json chunks")
+            self.notification_bar.display_end("parsing error")
+
+    def load(self):
+        data = load_tilemap_data(BASE_PATH / "mapdata.json")
+        if not data:
+            return
+
+        if data.get("tilemap", None) is not None:
+            self.tilemap.set_tilemap(data.get("tilemap"))
+        if data.get("offgrid", None) is not None:
+            self.tilemap.set_offgrid_tiles(data.get("offgrid"))
+        if data.get("tile_size", None) is not None:
+            self.tilemap.set_tilesize(data.get("tile_size"))
 
     def toggle_ongridbtn_callback(self):
         """callback for ongrid_toggle button only
@@ -283,6 +298,39 @@ class Editor:
             self.draw()
             pygame.display.flip()
         pygame.quit()
+
+
+def dump_mapdata(data: Tilemap):
+    with open("mapdata.json", "w") as fp:
+        serialized_tilemap_data = {
+            ",".join(map(str, k)): v._asdict() for k, v in data.tilemap.items()
+        }
+        json.dump(
+            {
+                "tilemap": serialized_tilemap_data or dict(),
+                "offgrid": list(data.offgrid_tiles) or [],
+                "tile_size": (TILE_SIZE),
+            },
+            fp,
+            indent=4,
+        )
+
+
+def load_tilemap_data(path: Path):
+    if path.suffix != ".json":
+        print("not map data")
+        return None
+    try:
+        with open(path, "r") as file:
+            data = json.load(file)
+            return data
+    except FileNotFoundError:
+        print("file not found")
+    except JSONDecodeError:
+        print("error parsing json file")
+    except Exception as other_err:
+        print(f"{other_err}")
+    return None
 
 
 if __name__ == "__main__":
