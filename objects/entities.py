@@ -83,6 +83,9 @@ class PhysicsEntity:
         elif movement[0] > 0:
             self.flipped = False
 
+        if not self.collisions["down"] and movement[0] != 0:
+            self.set_action("jump")
+
         self.animation.update()
 
     def render(
