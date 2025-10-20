@@ -1,10 +1,20 @@
+from dataclasses import dataclass
 from pathlib import Path
 from pygame import Rect
-from typing import Dict, List, Literal, NamedTuple, Tuple, TypedDict, Union, cast
+from typing import (
+    Dict,
+    List,
+    Literal,
+    NamedTuple,
+    Sequence,
+    Tuple,
+    TypedDict,
+    Union,
+    cast,
+)
 from typing import TYPE_CHECKING
 import json
-from constants import SCREEN_HEIGHT, SCREEN_WIDTH, TILE_SIZE
-from pgdebug import pgdebug, pgdebug_rect
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH
 
 
 if TYPE_CHECKING:
@@ -26,7 +36,8 @@ NEIGHBOUR_OFFSET = [
 ]
 
 
-class Tile(NamedTuple):
+@dataclass
+class Tile:
     ttype: "TTileTypes"
     pos: tuple[int, int]
     variant: int
@@ -35,6 +46,9 @@ class Tile(NamedTuple):
     @staticmethod
     def is_physics_tile(tile: "Tile"):
         return tile.ttype == "grass" or tile.ttype == "stone"
+
+    def copy(self):
+        return Tile(self.ttype, self.pos, self.variant)
 
 
 class Tilemap:
@@ -45,7 +59,7 @@ class Tilemap:
             (tile_size if type(tile_size) == tuple else (tile_size, tile_size)),
         )
         self.tilemap: Dict[Tuple[int, int], Tile] = {}
-        self.offgrid_tiles: set[Tile] = set()
+        self.offgrid_tiles: List[Tile] = []
 
     def tiles_around(self, pos: Tuple[int, int]) -> List[Tile]:
         tiles = []
@@ -151,10 +165,10 @@ class Tilemap:
                 )
 
             # Parse offgrid tiles directly
-            self.offgrid_tiles = set(
+            self.offgrid_tiles = [
                 Tile(ttype=t[0], pos=tuple(t[1]), variant=t[2], rotation=t[3])
                 for t in data.get("offgrid", [])
-            )
+            ]
 
             # Set tile size
             self.tile_size = data.get("tile_size", self.tile_size)

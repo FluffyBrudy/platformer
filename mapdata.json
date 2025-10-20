@@ -980,6 +980,456 @@
             ],
             "variant": 8,
             "rotation": 0
+        },
+        "24,4": {
+            "ttype": "grass",
+            "pos": [
+                24,
+                4
+            ],
+            "variant": 0,
+            "rotation": 0
+        },
+        "25,9": {
+            "ttype": "grass",
+            "pos": [
+                25,
+                9
+            ],
+            "variant": 6,
+            "rotation": 0
+        },
+        "26,9": {
+            "ttype": "grass",
+            "pos": [
+                26,
+                9
+            ],
+            "variant": 5,
+            "rotation": 0
+        },
+        "27,9": {
+            "ttype": "grass",
+            "pos": [
+                27,
+                9
+            ],
+            "variant": 5,
+            "rotation": 0
+        },
+        "28,9": {
+            "ttype": "grass",
+            "pos": [
+                28,
+                9
+            ],
+            "variant": 5,
+            "rotation": 0
+        },
+        "29,9": {
+            "ttype": "grass",
+            "pos": [
+                29,
+                9
+            ],
+            "variant": 5,
+            "rotation": 0
+        },
+        "30,9": {
+            "ttype": "grass",
+            "pos": [
+                30,
+                9
+            ],
+            "variant": 5,
+            "rotation": 0
+        },
+        "31,9": {
+            "ttype": "grass",
+            "pos": [
+                31,
+                9
+            ],
+            "variant": 4,
+            "rotation": 0
+        },
+        "32,8": {
+            "ttype": "grass",
+            "pos": [
+                32,
+                8
+            ],
+            "variant": 4,
+            "rotation": 0
+        },
+        "32,7": {
+            "ttype": "grass",
+            "pos": [
+                32,
+                7
+            ],
+            "variant": 3,
+            "rotation": 0
+        },
+        "32,6": {
+            "ttype": "grass",
+            "pos": [
+                32,
+                6
+            ],
+            "variant": 3,
+            "rotation": 0
+        },
+        "32,5": {
+            "ttype": "grass",
+            "pos": [
+                32,
+                5
+            ],
+            "variant": 3,
+            "rotation": 0
+        },
+        "32,4": {
+            "ttype": "grass",
+            "pos": [
+                32,
+                4
+            ],
+            "variant": 2,
+            "rotation": 0
+        },
+        "31,4": {
+            "ttype": "grass",
+            "pos": [
+                31,
+                4
+            ],
+            "variant": 1,
+            "rotation": 0
+        },
+        "30,4": {
+            "ttype": "grass",
+            "pos": [
+                30,
+                4
+            ],
+            "variant": 1,
+            "rotation": 0
+        },
+        "29,4": {
+            "ttype": "grass",
+            "pos": [
+                29,
+                4
+            ],
+            "variant": 1,
+            "rotation": 0
+        },
+        "28,4": {
+            "ttype": "grass",
+            "pos": [
+                28,
+                4
+            ],
+            "variant": 1,
+            "rotation": 0
+        },
+        "27,4": {
+            "ttype": "grass",
+            "pos": [
+                27,
+                4
+            ],
+            "variant": 1,
+            "rotation": 0
+        },
+        "26,4": {
+            "ttype": "grass",
+            "pos": [
+                26,
+                4
+            ],
+            "variant": 1,
+            "rotation": 0
+        },
+        "25,4": {
+            "ttype": "grass",
+            "pos": [
+                25,
+                4
+            ],
+            "variant": 1,
+            "rotation": 0
+        },
+        "31,7": {
+            "ttype": "grass",
+            "pos": [
+                31,
+                7
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "31,8": {
+            "ttype": "grass",
+            "pos": [
+                31,
+                8
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "31,6": {
+            "ttype": "grass",
+            "pos": [
+                31,
+                6
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "31,5": {
+            "ttype": "grass",
+            "pos": [
+                31,
+                5
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "30,5": {
+            "ttype": "grass",
+            "pos": [
+                30,
+                5
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "25,7": {
+            "ttype": "grass",
+            "pos": [
+                25,
+                7
+            ],
+            "variant": 7,
+            "rotation": 0
+        },
+        "26,7": {
+            "ttype": "grass",
+            "pos": [
+                26,
+                7
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "27,7": {
+            "ttype": "grass",
+            "pos": [
+                27,
+                7
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "28,7": {
+            "ttype": "grass",
+            "pos": [
+                28,
+                7
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "29,7": {
+            "ttype": "grass",
+            "pos": [
+                29,
+                7
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "29,8": {
+            "ttype": "grass",
+            "pos": [
+                29,
+                8
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "30,8": {
+            "ttype": "grass",
+            "pos": [
+                30,
+                8
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "28,8": {
+            "ttype": "grass",
+            "pos": [
+                28,
+                8
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "27,8": {
+            "ttype": "grass",
+            "pos": [
+                27,
+                8
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "26,8": {
+            "ttype": "grass",
+            "pos": [
+                26,
+                8
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "25,8": {
+            "ttype": "grass",
+            "pos": [
+                25,
+                8
+            ],
+            "variant": 7,
+            "rotation": 0
+        },
+        "30,7": {
+            "ttype": "grass",
+            "pos": [
+                30,
+                7
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "30,6": {
+            "ttype": "grass",
+            "pos": [
+                30,
+                6
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "29,5": {
+            "ttype": "grass",
+            "pos": [
+                29,
+                5
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "28,5": {
+            "ttype": "grass",
+            "pos": [
+                28,
+                5
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "27,5": {
+            "ttype": "grass",
+            "pos": [
+                27,
+                5
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "26,5": {
+            "ttype": "grass",
+            "pos": [
+                26,
+                5
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "25,5": {
+            "ttype": "grass",
+            "pos": [
+                25,
+                5
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "24,5": {
+            "ttype": "grass",
+            "pos": [
+                24,
+                5
+            ],
+            "variant": 7,
+            "rotation": 0
+        },
+        "24,6": {
+            "ttype": "grass",
+            "pos": [
+                24,
+                6
+            ],
+            "variant": 6,
+            "rotation": 0
+        },
+        "25,6": {
+            "ttype": "grass",
+            "pos": [
+                25,
+                6
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "26,6": {
+            "ttype": "grass",
+            "pos": [
+                26,
+                6
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "27,6": {
+            "ttype": "grass",
+            "pos": [
+                27,
+                6
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "28,6": {
+            "ttype": "grass",
+            "pos": [
+                28,
+                6
+            ],
+            "variant": 8,
+            "rotation": 0
+        },
+        "29,6": {
+            "ttype": "grass",
+            "pos": [
+                29,
+                6
+            ],
+            "variant": 8,
+            "rotation": 0
         }
     },
     "offgrid": [
@@ -1060,6 +1510,33 @@
             [
                 201,
                 225
+            ],
+            2,
+            0
+        ],
+        [
+            "largedecor",
+            [
+                869,
+                46
+            ],
+            2,
+            0
+        ],
+        [
+            "largedecor",
+            [
+                821,
+                70
+            ],
+            2,
+            0
+        ],
+        [
+            "largedecor",
+            [
+                903,
+                45
             ],
             2,
             0

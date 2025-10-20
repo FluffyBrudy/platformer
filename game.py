@@ -42,7 +42,7 @@ class Game:
                 load_images(
                     ASSETS_PATH / "entities" / "player" / "idle",
                     scale=1.8,
-                )
+                ),
             ),
             "player/run": Animation(
                 load_images(

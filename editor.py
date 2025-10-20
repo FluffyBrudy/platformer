@@ -240,7 +240,7 @@ class Editor:
     def plot_tile_offgrid(self):
         pos = self.get_raw_world_coor()
         ttype = self.tilelist[self.tile_group]
-        self.tilemap.offgrid_tiles.add(
+        self.tilemap.offgrid_tiles.append(
             Tile(ttype, pos, self.tile_variant, self.tile_rotation)
         )
 

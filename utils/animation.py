@@ -4,7 +4,7 @@ from copy import deepcopy
 
 
 class Animation:
-    def __init__(self, frames: Sequence[Surface], animation_speed=0.2, loop=False):
+    def __init__(self, frames: Sequence[Surface], animation_speed=0.2, loop=True):
         assert len(frames) > 0
         self.frames = deepcopy(frames)
         self.loop = loop
@@ -13,11 +13,10 @@ class Animation:
         self.frameslen = len(self.frames)
 
     def update(self):
+        if self.has_animation_end() and not self.loop:
+            return
         self.frame_index += self.animation_speed
         if self.has_animation_end():
-            if not self.loop:
-                self.reset_animation(-1)
-                return
             self.reset_animation()
 
     def get_frame(self):
@@ -27,5 +26,5 @@ class Animation:
     def has_animation_end(self):
         return self.frame_index >= self.frameslen
 
-    def reset_animation(self, step_back=0):
-        self.frame_index = step_back
+    def reset_animation(self):
+        self.frame_index = 0
