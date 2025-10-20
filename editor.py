@@ -1,7 +1,6 @@
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, Literal, Optional, Tuple, cast
-from numpy import tile
 import pygame
 import json
 from pygame import Event
@@ -13,9 +12,11 @@ from constants import (
     SCREEN_WIDTH,
     TILE_SIZE,
 )
+from objects import tilemap
 from objects.tilemap import Tile, Tilemap
 from utils.image_utils import load_key_images
-from widget import NotificationBar, ToggleSlider
+from utils.editor_utils import sorted_pos_tuple
+from widget import KeyboardHelp, NotificationBar, ToggleSlider
 
 
 if TYPE_CHECKING:
@@ -55,6 +56,20 @@ class Editor:
         self.tilemap: Tilemap = Tilemap(self, TILE_SIZE[0])  # type:ignore
         self.ongrid = False
 
+        # autotile
+        self.autotile_types = ("grass", "stone")
+        self.autotile_map = {
+            sorted_pos_tuple((0, 1), (1, 0)): 0,
+            sorted_pos_tuple((1, 0), (0, 1), (-1, 0)): 1,
+            sorted_pos_tuple((0, 1), (-1, 0)): 2,
+            sorted_pos_tuple((-1, 0), (0, -1), (0, 1)): 3,
+            sorted_pos_tuple((0, -1), (-1, 0)): 4,
+            sorted_pos_tuple((0, -1), (1, 0), (-1, 0)): 5,
+            sorted_pos_tuple((0, -1), (1, 0)): 6,
+            sorted_pos_tuple((0, -1), (0, 1), (1, 0)): 7,
+            sorted_pos_tuple((0, -1), (0, 1), (1, 0), (-1, 0)): 8,
+        }
+
         # Camera
         self.scroll: pygame.math.Vector2 = pygame.math.Vector2(0, 0)
 
@@ -89,7 +104,9 @@ class Editor:
             (pygame.KEYUP, pygame.K_DOWN): lambda e: self.set_move(3, False),
             (pygame.KEYDOWN, pygame.K_r): lambda e: self.set_tile_rotation(-1),
             (pygame.KEYDOWN, pygame.K_g): lambda _: self.toggle_ongrid(),
+            (pygame.KEYDOWN, pygame.K_t): lambda e: self.autotile(),
             (pygame.KEYDOWN, pygame.K_s): lambda e: self.handle_hotkey(e.key),
+            (pygame.KEYDOWN, pygame.K_h): lambda e: self.keyboard_help.toggle(),
         }
 
         # Global mouse pos
@@ -105,6 +122,7 @@ class Editor:
             self.toggle_ongridbtn_callback,
         )
         self.notification_bar = NotificationBar(self.screen)
+        self.keyboard_help = KeyboardHelp(pygame.font.SysFont(None, 25))
 
         self.load()
 
@@ -128,6 +146,23 @@ class Editor:
             self.tilemap.set_offgrid_tiles(data.get("offgrid"))
         if data.get("tile_size", None) is not None:
             self.tilemap.set_tilesize(data.get("tile_size"))
+
+    def autotile(self):
+        for loc in self.tilemap.tilemap:
+            tile = self.tilemap.tilemap[loc]
+            neighbours = set()
+
+            for shift in [(1, 0), (-1, 0), (0, -1), (0, 1)]:
+                check_loc = tile.pos[0] + shift[0], tile.pos[1] + shift[1]
+                if check_loc in self.tilemap.tilemap:
+                    if self.tilemap.tilemap[check_loc].ttype == tile.ttype:
+                        neighbours.add(shift)
+
+            neighbours = tuple(sorted(tuple(neighbours)))
+            if tile.ttype in self.autotile_types and neighbours in self.autotile_map:
+                self.tilemap.tilemap[tile.pos] = Tile(
+                    tile.ttype, tile.pos, self.autotile_map[neighbours]
+                )
 
     def toggle_ongridbtn_callback(self):
         """callback for ongrid_toggle button only
@@ -289,6 +324,7 @@ class Editor:
         else:
             self.preview_selected_offgrid_tile()
         self.notification_bar.draw()
+        self.keyboard_help.draw(self.screen)
 
     def run(self) -> None:
         while self.running:

@@ -1,6 +1,6 @@
 import pygame
 from pygame import Surface, Rect
-import math
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH, Color
 
 
 class ToggleSlider:
@@ -29,7 +29,7 @@ class ToggleSlider:
         self.bg_on = pygame.Color(70, 130, 255)
         self.knob_color = pygame.Color(255, 255, 255)
 
-    def toggle(self, call_callback=True):
+    def toggle(self):
         self.index = (self.index + 1) % len(self.states)
         self.target = 1.0 if self.index else 0.0
 
@@ -133,3 +133,76 @@ class NotificationBar:
         self.surface.blit(text_surf, text_rect)
 
         self.screen.blit(self.surface, (0, int(self.y_offset)))
+
+
+class KeyboardHelp:
+    def __init__(self, font: pygame.font.Font):
+        self.font = font
+        self.visible = False
+
+        self.width = SCREEN_WIDTH * 0.5
+        self.height = SCREEN_HEIGHT * 0.6
+        self.padding = 20
+        self.corner_radius = 12
+
+        self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+
+        self.help_text = [
+            "Keyboard Shortcuts",
+            "-" * 25,
+            "Arrow Keys: Move camera",
+            "Left Click: Place tile",
+            "Right Click: Remove tile",
+            "Mouse Wheel: Change tile group",
+            "Shift + Wheel: Change tile variant",
+            "G: Toggle on-grid/off-grid mode",
+            "R: Rotate tile",
+            "CTRL + S: Save map",
+            "H: Toggle this help",
+        ]
+
+    def toggle(self):
+        self.visible = not self.visible
+
+    def draw(self, screen: pygame.Surface):
+        if not self.visible:
+            return
+
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))
+        screen.blit(overlay, (0, 0))
+
+        self.surface.fill((0, 0, 0, 0))
+        pygame.draw.rect(
+            self.surface,
+            (40, 40, 40, 230),
+            (0, 0, self.width, self.height),
+            border_radius=self.corner_radius,
+        )
+
+        shadow = pygame.Surface((self.width + 6, self.height + 6), pygame.SRCALPHA)
+        pygame.draw.rect(
+            shadow,
+            (0, 0, 0, 100),
+            (3, 3, self.width, self.height),
+            border_radius=self.corner_radius,
+        )
+        screen.blit(
+            shadow,
+            ((SCREEN_WIDTH - self.width) // 2, (SCREEN_HEIGHT - self.height) // 2),
+        )
+
+        y = self.padding
+        title_rendered = self.font.render(self.help_text[0], True, Color.WHITE)
+        self.surface.blit(title_rendered, (self.padding, y))
+        y += title_rendered.get_height() + 10
+
+        for line in self.help_text[1:]:
+            rendered_text = self.font.render(line, True, Color.LIGHT_GRAY)
+            self.surface.blit(rendered_text, (self.padding, y))
+            y += rendered_text.get_height() + 5
+
+        screen.blit(
+            self.surface,
+            ((SCREEN_WIDTH - self.width) // 2, (SCREEN_HEIGHT - self.height) // 2),
+        )

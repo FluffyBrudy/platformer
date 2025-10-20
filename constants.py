@@ -1,6 +1,5 @@
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, TypedDict
 
 BASE_PATH = Path(__file__).parent
 ASSETS_PATH = BASE_PATH / "assets" / "data" / "images"
@@ -16,5 +15,8 @@ TILE_SIZE = (32, 32)
 @dataclass
 class Color:
     BG_COLOR = (14, 219, 248, 255)
+    WHITE = (255, 255, 255, 255)
     BLACK = (0, 0, 0, 255)
     RED = (255, 0, 0, 255)
+    GRAY = (100, 100, 100, 255)
+    LIGHT_GRAY = (200, 200, 200, 255)

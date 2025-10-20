@@ -29,7 +29,7 @@ class Tile(NamedTuple):
     ttype: "TTileTypes"
     pos: tuple[int, int]
     variant: int
-    rotaion: int = 0
+    rotation: int = 0
 
     @staticmethod
     def is_physics_tile(tile: "Tile"):
@@ -61,7 +61,7 @@ class Tilemap:
                 ttype=tile_data["ttype"],
                 pos=pos,
                 variant=tile_data.get("variant", 0),
-                rotaion=tile_data.get("rotaion", 0),
+                rotation=tile_data.get("rotation", 0),
             )
 
     def set_offgrid_tiles(self, offgrid_tiles: list[list]):
@@ -73,7 +73,7 @@ class Tilemap:
             set[Tile]
         """
         self.offgrid_tiles = set(
-            Tile(ttype=t[0], pos=tuple(t[1]), variant=t[2], rotaion=t[3])
+            Tile(ttype=t[0], pos=tuple(t[1]), variant=t[2], rotation=t[3])
             for t in offgrid_tiles
         )
 
