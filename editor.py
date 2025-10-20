@@ -1,6 +1,4 @@
-from json.decoder import JSONDecodeError
-from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Dict, Literal, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Callable, Dict, Literal, Optional, Tuple
 import pygame
 import json
 from pygame import Event
@@ -12,11 +10,10 @@ from constants import (
     SCREEN_WIDTH,
     TILE_SIZE,
 )
-from objects import tilemap
 from objects.tilemap import Tile, Tilemap
 from utils.image_utils import load_key_images
 from utils.editor_utils import sorted_pos_tuple
-from widget import KeyboardHelp, NotificationBar, ToggleSlider
+from widget import KeyboardHelp, NotificationBar
 
 
 if TYPE_CHECKING:
@@ -112,16 +109,8 @@ class Editor:
         # Global mouse pos
         self.mouse_pos = pygame.mouse.get_pos()
 
-        # some extra widgets just for help
+        # some extra widgets
         self.font = pygame.font.SysFont(None, 15)
-        self.ongrid_toggle = ToggleSlider(
-            (SCREEN_WIDTH - 55, 0),
-            (55, 25),
-            ["ongrid", "ongrid"],
-            self.font,
-            self.toggle_ongridbtn_callback,
-            self.ongrid,
-        )
         self.notification_bar = NotificationBar(self.screen)
         self.keyboard_help = KeyboardHelp(pygame.font.SysFont(None, 25))
 
@@ -158,15 +147,8 @@ class Editor:
                     tile.ttype, tile.pos, self.autotile_map[neighbours]
                 )
 
-    def toggle_ongridbtn_callback(self):
-        """callback for ongrid_toggle button only
-        not intended for regular use
-        """
-        self.ongrid = not self.ongrid
-
     def toggle_ongrid(self):
         self.ongrid = not self.ongrid
-        self.ongrid_toggle.toggle()
 
     def stop(self) -> None:
         self.running = False
@@ -282,7 +264,6 @@ class Editor:
         self.left_just_released = False
         self.right_just_released = False
         for event in pygame.event.get():
-            self.ongrid_toggle.handle_event(event)
             event_attr = getattr(event, "key", None) or getattr(event, "button", None)
             unary_event = self.event_map.get((event.type, None))
             handler = self.event_map.get((event.type, event_attr)) or unary_event
@@ -292,11 +273,7 @@ class Editor:
     def update(self) -> None:
         self.mouse_pos = pygame.mouse.get_pos()
 
-        self.ongrid_toggle.update()
         self.camera_movement()
-
-        if self.ongrid_toggle.is_hovered():
-            return
 
         if self.ongrid and self.left_pressed:
             self.plot_tile_ongrid()
@@ -309,10 +286,7 @@ class Editor:
 
     def draw(self) -> None:
         self.tilemap.render(self.screen, self.scroll)
-        self.ongrid_toggle.draw(self.screen)
 
-        if self.ongrid_toggle.is_hovered():
-            return
         if self.ongrid:
             self.preview_selected_ongrid_tile()
         else:
