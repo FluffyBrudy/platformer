@@ -1,5 +1,5 @@
 import pygame
-from constants import ASSETS_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import ASSETS_PATH, BASE_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from objects.cloud import CloudGroup
 from objects.entities import Player
 from objects.tilemap import Tilemap
@@ -70,14 +70,13 @@ class Game:
             ),
         }
 
-        print(self.assets["player"].size)
-
         # player
         self.player = Player(self, "player", (150, 50), self.assets["player"].size)
 
         # tilemap
         self.tilemap = Tilemap(self, TILE_SIZE[0])
-
+        self.tilemap.load_tilemap_data(BASE_PATH / "mapdata.json")
+        print(self.tilemap.tilemap)
         # camera
         self.scroll = pygame.math.Vector2(0, 0)
 
@@ -92,12 +91,12 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     self.movement[0] = True
-                elif event.key == pygame.K_RIGHT:
+                if event.key == pygame.K_RIGHT:
                     self.movement[1] = True
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
                     self.movement[0] = False
-                elif event.key == pygame.K_RIGHT:
+                if event.key == pygame.K_RIGHT:
                     self.movement[1] = False
                 if event.key == pygame.K_UP:
                     self.player.jump(energy=0.5)
@@ -116,11 +115,6 @@ class Game:
         )
         self.scroll.y = round(
             self.scroll.y + (target_scroll_y - self.scroll.y) * 0.5, 2
-        )
-        pgdebug(
-            self.screen,
-            f"game.py: {self.scroll.x // TILE_SIZE[0]}, {self.screen.width // TILE_SIZE[1] + 1}",
-            2,
         )
 
     def draw(self):

@@ -4,7 +4,7 @@ from copy import deepcopy
 
 
 class Animation:
-    def __init__(self, frames: Sequence[Surface], animation_speed=0.1, loop=False):
+    def __init__(self, frames: Sequence[Surface], animation_speed=0.2, loop=False):
         assert len(frames) > 0
         self.frames = deepcopy(frames)
         self.loop = loop

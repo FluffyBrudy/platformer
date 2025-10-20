@@ -11,6 +11,7 @@ class ToggleSlider:
         states: list[str],
         font: pygame.font.Font,
         callback=lambda: print("toggle"),
+        default=False,
     ) -> None:
         self.pos = pos
         self.size = size
@@ -18,7 +19,7 @@ class ToggleSlider:
         self.index = 0
         self.hovered = False
         self.transition = 0.0
-        self.target = 0.0
+        self.target = 1.0 if default else 0.0
 
         self.callback = callback
 

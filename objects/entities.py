@@ -67,8 +67,8 @@ class PhysicsEntity:
                     entity_rect.bottom = rect.top
                     self.collisions["down"] = True
                 self.pos[1] = entity_rect.y
-        self.velocity.y = min(5, (self.velocity.y + 0.1))
-        if self.collisions["down"]:
+        self.velocity.y = min(10, (self.velocity.y + 0.1))
+        if self.collisions["down"] or self.collisions["up"]:
             self.velocity.y = 0
 
         probe_rect = self.rect.move(0, 1)
@@ -90,13 +90,11 @@ class PhysicsEntity:
         surface: pygame.Surface,
         offset: Union[pygame.Vector2, Tuple[float, float]],
     ):
-        pgdebug(surface, f"entity.py: {self.collisions}", 1)
         pos = (self.pos[0] - offset[0], self.pos[1] - offset[1])
         img = self.animation.get_frame()
         if self.flipped:
             img = pygame.transform.flip(img, True, False)
         surface.blit(img, pos)
-        pgdebug_rect(surface, (*pos, *self.size))
 
 
 class Player(PhysicsEntity):

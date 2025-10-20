@@ -54,7 +54,7 @@ class Editor:
         self.tile_variant: int = 0
         self.tile_rotation: int = 0  # TODO: expreimental, not yet on tilemap
         self.tilemap: Tilemap = Tilemap(self, TILE_SIZE[0])  # type:ignore
-        self.ongrid = False
+        self.ongrid = True
 
         # autotile
         self.autotile_types = ("grass", "stone")
@@ -120,6 +120,7 @@ class Editor:
             ["ongrid", "ongrid"],
             self.font,
             self.toggle_ongridbtn_callback,
+            self.ongrid,
         )
         self.notification_bar = NotificationBar(self.screen)
         self.keyboard_help = KeyboardHelp(pygame.font.SysFont(None, 25))
@@ -129,23 +130,16 @@ class Editor:
     def save(self):
         self.notification_bar.display_start("saving map data...")
         try:
-            dump_mapdata(self.tilemap)
+            self.tilemap.dump_mapdata(BASE_PATH / "mapdata.json")
             self.notification_bar.display_end("success")
         except json.JSONDecodeError:
             print("bad json chunks")
             self.notification_bar.display_end("parsing error")
 
     def load(self):
-        data = load_tilemap_data(BASE_PATH / "mapdata.json")
+        data = self.tilemap.load_tilemap_data(BASE_PATH / "mapdata.json")
         if not data:
             return
-
-        if data.get("tilemap", None) is not None:
-            self.tilemap.set_tilemap(data.get("tilemap"))
-        if data.get("offgrid", None) is not None:
-            self.tilemap.set_offgrid_tiles(data.get("offgrid"))
-        if data.get("tile_size", None) is not None:
-            self.tilemap.set_tilesize(data.get("tile_size"))
 
     def autotile(self):
         for loc in self.tilemap.tilemap:
@@ -334,39 +328,6 @@ class Editor:
             self.draw()
             pygame.display.flip()
         pygame.quit()
-
-
-def dump_mapdata(data: Tilemap):
-    with open("mapdata.json", "w") as fp:
-        serialized_tilemap_data = {
-            ",".join(map(str, k)): v._asdict() for k, v in data.tilemap.items()
-        }
-        json.dump(
-            {
-                "tilemap": serialized_tilemap_data or dict(),
-                "offgrid": list(data.offgrid_tiles) or [],
-                "tile_size": (TILE_SIZE),
-            },
-            fp,
-            indent=4,
-        )
-
-
-def load_tilemap_data(path: Path):
-    if path.suffix != ".json":
-        print("not map data")
-        return None
-    try:
-        with open(path, "r") as file:
-            data = json.load(file)
-            return data
-    except FileNotFoundError:
-        print("file not found")
-    except JSONDecodeError:
-        print("error parsing json file")
-    except Exception as other_err:
-        print(f"{other_err}")
-    return None
 
 
 if __name__ == "__main__":

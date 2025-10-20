@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple
+from typing import Tuple
 
 
 def sorted_pos_tuple(*coor: Tuple[int, int]):
