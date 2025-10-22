@@ -51,7 +51,7 @@ def load_key_images(
 
     Args:
         dir_path (Path): The directory to extract images
-        key_index (Optional[Iterable[int]]): character at index to use as key
+        key_index (Optional[Iterable[int]]): character at index to use as key, make sure file name has number prefix
 
     Returns:
         Dict[str, pygame.Surface]

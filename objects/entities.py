@@ -34,7 +34,7 @@ class PhysicsEntity:
     def set_action(self, action: TActions):
         if self.action != action:
             self.action = action
-            self.animation: "Animation" = self.game.assets[f"player/{action}"]
+            self.animation: "Animation" = self.game.assets[f"player/{action}"].copy()
             self.size = self.animation.get_frame().size
 
     def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):

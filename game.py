@@ -1,11 +1,12 @@
+from typing import List
 import pygame
-from constants import ASSETS_PATH, BASE_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from objects.cloud import CloudGroup
+from objects.particles import Particle
 from objects.entities import Player
 from objects.tilemap import Tilemap
-from pgdebug import Debug, pgdebug
 from utils.animation import Animation
 from utils.image_utils import load_image, load_images, load_key_images
+from constants import ASSETS_PATH, BASE_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from constants import TILE_SIZE
 
 # from pprint import pprint
@@ -28,11 +29,17 @@ class Game:
                 Color.BLACK,
             ),
             "clouds": load_images(ASSETS_PATH / "clouds"),
-            "grass": load_key_images(ASSETS_PATH / "tiles" / "grass", 2),
-            "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", 2),
+            "grass": load_key_images(ASSETS_PATH / "tiles" / "grass", TILE_SIZE),
+            "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", TILE_SIZE),
             "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", 2),
             "largedecor": load_key_images(ASSETS_PATH / "tiles" / "large_decor", 2),
             "spawners": load_key_images(ASSETS_PATH / "tiles" / "spawners"),
+            "particles/leaf": Animation(
+                load_images(ASSETS_PATH / "particles" / "leaf", 2), 0.05, False
+            ),
+            "particles/particle": Animation(
+                load_images(ASSETS_PATH / "particles" / "particle")
+            ),
             "background": load_image(
                 ASSETS_PATH / "background.png", (SCREEN_WIDTH, SCREEN_HEIGHT)
             ),
@@ -76,12 +83,25 @@ class Game:
         # tilemap
         self.tilemap = Tilemap(self, TILE_SIZE[0])
         self.tilemap.load_tilemap_data(BASE_PATH / "mapdata.json")
-        print(self.tilemap.tilemap)
+
         # camera
         self.scroll = pygame.math.Vector2(0, 0)
 
         # cloud groups
         self.clouds = CloudGroup(self.assets["clouds"])
+
+        # spawns
+        self.spawn_leafs_rects()
+
+    def spawn_leafs_rects(self):
+        self.leaf_spawners: List[pygame.Rect] = []
+
+        for tree in self.tilemap.extract([("largedecor", 2)], keep=True):
+            self.leaf_spawners.append(
+                pygame.Rect(
+                    tree.pos[0], tree.pos[1], TILE_SIZE[0] // 2, TILE_SIZE[1] // 2
+                )
+            )
 
     def handle_event(self):
         for event in pygame.event.get():
@@ -103,8 +123,10 @@ class Game:
 
     def update(self, dt: float):
         movement = (self.movement[1] - self.movement[0], 0)
-        self.player.update(dt, self.tilemap, movement)
         self.clouds.update(dt)
+        self.player.update(dt, self.tilemap, movement)
+        Particle.spawn_leafs(self, self.leaf_spawners)
+        Particle.update_leafs(dt)
         self.camera_movement()
 
     def camera_movement(self):
@@ -121,6 +143,7 @@ class Game:
         self.clouds.render(self.screen, offset=self.scroll)
         self.tilemap.render(self.screen, offset=self.scroll)
         self.player.render(self.screen, offset=self.scroll)
+        Particle.draw_particles(self.screen, self.scroll)  # type:ignore
 
     def run(self):
         while self.running:
@@ -129,7 +152,6 @@ class Game:
             self.handle_event()
             self.update(dt)
             self.draw()
-            # Debug.draw_all(self.screen)
             pygame.display.flip()
         pygame.quit()
 

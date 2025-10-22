@@ -1,20 +1,17 @@
+from pygame import Rect, Vector2
 from dataclasses import dataclass
 from pathlib import Path
-from pygame import Rect
 from typing import (
     Dict,
     List,
-    Literal,
-    NamedTuple,
     Sequence,
     Tuple,
-    TypedDict,
     Union,
     cast,
 )
 from typing import TYPE_CHECKING
 import json
-from constants import SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH, TILE_SIZE
 
 
 if TYPE_CHECKING:
@@ -60,6 +57,8 @@ class Tilemap:
         )
         self.tilemap: Dict[Tuple[int, int], Tile] = {}
         self.offgrid_tiles: List[Tile] = []
+        self.offgrid_cull_min_pos = Vector2(-2 * TILE_SIZE[0], -2 * TILE_SIZE[1])
+        self.offgrid_cull_max_pos = Vector2(SCREEN_WIDTH, SCREEN_HEIGHT)
 
     def tiles_around(self, pos: Tuple[int, int]) -> List[Tile]:
         tiles = []
@@ -85,6 +84,32 @@ class Tilemap:
 
         return physics_tiles
 
+    def extract(self, id_pairs: Sequence[Tuple[str, int]], keep=False):
+        """
+        Args:
+            id_pairs: Sequence of (tile_type, variant)
+            keep: boolean value indicating wether to keep or remove tiles
+        """
+        matches: List[Tile] = []
+
+        for tile in self.offgrid_tiles.copy():
+            if (tile.ttype, tile.variant) in id_pairs:
+                matches.append(tile)
+                if not keep:
+                    self.offgrid_tiles.remove(tile)
+
+        for loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if (tile.ttype, tile.variant) in id_pairs:
+                matches.append(tile)
+                matches[-1].pos = (
+                    self.tile_size[0] * matches[-1].pos[0],
+                    self.tile_size[1] * matches[-1].pos[1],
+                )
+                if not keep:
+                    del self.tilemap[loc]
+        return matches
+
     def render(
         self,
         surface: "Surface",
@@ -95,7 +120,16 @@ class Tilemap:
                 tile.pos[0] - offset[0],
                 tile.pos[1] - offset[1],
             )
-            surface.blit(self.game.assets[tile.ttype][str(tile.variant)], tile_pos)
+
+            if (
+                self.offgrid_cull_min_pos.x
+                <= tile_pos[0]
+                <= self.offgrid_cull_max_pos.x
+                and self.offgrid_cull_min_pos.y
+                <= tile_pos[1]
+                <= self.offgrid_cull_max_pos.y
+            ):
+                surface.blit(self.game.assets[tile.ttype][str(tile.variant)], tile_pos)
 
         start_x = int(offset[0] // self.tile_size[0])
         end_x = start_x + (SCREEN_WIDTH // self.tile_size[0] + 2)
