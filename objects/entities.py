@@ -27,10 +27,21 @@ class PhysicsEntity:
         self.flipped = False
         self.set_action("idle")
 
+        self.hitbox_offset = (10, 0)
+        self.hitbox_size = (self.size[0] - 2 * self.hitbox_offset[0], self.size[1])
+
     @property
     def rect(self):
-        print(self.size, self.pos)
         return pygame.Rect(self.pos, self.size)
+
+    @property
+    def collision_rect(self):
+        return pygame.Rect(
+            self.pos[0] + self.hitbox_offset[0],
+            self.pos[1] + self.hitbox_offset[1],
+            self.hitbox_size[0],
+            self.hitbox_size[1],
+        )
 
     def set_action(self, action: TActions):
         if self.action != action:
@@ -51,20 +62,24 @@ class PhysicsEntity:
         frame_movement_y = (movement[1] + (self.velocity.y)) * (dt * BASE_SPEED)
 
         self.pos[0] += frame_movement_x  # type:ignore
-        entity_rect = self.rect
-
+        entity_rect = self.collision_rect
+        delta = 0
         for rect in tilemap.physics_rects_around(self.pos):  # type: ignore
             if entity_rect.colliderect(rect):
-                if frame_movement_x > 0:
-                    entity_rect.right = rect.left
+                if movement[0] > 0:
+                    delta = rect.left - entity_rect.right - 1
                     self.collisions["right"] = True
-                if frame_movement_x < 0:
-                    entity_rect.left = rect.right
+                    self.pos[0] += delta  # type: ignore
+                    break
+                elif movement[0] < 0:
+                    delta = rect.right - entity_rect.left
                     self.collisions["left"] = True
-                self.pos[0] = entity_rect.x
+                    self.pos[0] += delta  # type: ignore
+                    break
 
         self.pos[1] += frame_movement_y  # type: ignore
-        entity_rect = self.rect
+
+        entity_rect = self.collision_rect
         for rect in tilemap.physics_rects_around(self.pos):  # type: ignore
             if entity_rect.colliderect(rect):
                 if frame_movement_y < 0:
@@ -74,22 +89,25 @@ class PhysicsEntity:
                     entity_rect.bottom = rect.top
                     self.collisions["down"] = True
                 self.pos[1] = entity_rect.y
+
         self.velocity.y = min(10, (self.velocity.y + 0.1))
         if self.collisions["down"] or self.collisions["up"]:
             self.velocity.y = 0
 
         self.handle_flipping(movement)
 
-        probe_rect = self.rect.move(0, 1)
+        probe_rect = self.collision_rect.move(0, 1)
         tiles_around = tilemap.physics_rects_around(self.pos)  # type: ignore
 
         for rect in tiles_around:
             if probe_rect.colliderect(rect):
                 self.collisions["down"] = True
                 break
+
         flip_dir = -1 if self.flipped else 1
+
         collision_side = "left" if self.flipped else "right"
-        probe_rect = self.rect.move(flip_dir, 0)
+        probe_rect = self.collision_rect.move(flip_dir, 0)
         for rect in tiles_around:
             if probe_rect.colliderect(rect):
                 self.collisions[collision_side] = True
@@ -101,6 +119,8 @@ class PhysicsEntity:
         ):
             self.set_action("wallslide")
             self.velocity.y = min(self.velocity.y, 1.1)
+        elif not self.collisions["down"]:
+            self.set_action("jump")
 
         self.animation.update()
 
