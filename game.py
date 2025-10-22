@@ -136,7 +136,7 @@ class Game:
             self.scroll.x + (target_scroll_x - self.scroll.x) * 0.1, 2
         )
         self.scroll.y = round(
-            self.scroll.y + (target_scroll_y - self.scroll.y) * 0.5, 2
+            self.scroll.y + int((target_scroll_y - self.scroll.y) * 0.05), 2
         )
 
     def draw(self):
