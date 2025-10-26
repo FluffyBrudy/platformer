@@ -217,14 +217,18 @@ class Editor:
     def preview_selected_ongrid_tile(self):
         tile_img = self.get_current_tile_image()
         tile_img.set_alpha(150)
-        pos_x, pos_y = self.convert_coor_to_grid(omit_offset=True)
-        self.screen.blit(tile_img, (pos_x * TILE_SIZE[0], pos_y * TILE_SIZE[1]))
+        grid_x, grid_y = self.convert_coor_to_grid()
+        draw_x = grid_x * TILE_SIZE[0] - self.scroll[0]
+        draw_y = grid_y * TILE_SIZE[1] - self.scroll[1]
+        self.screen.blit(tile_img, (draw_x, draw_y))
 
     def preview_selected_offgrid_tile(self):
         tile_img = self.get_current_tile_image()
         tile_img.set_alpha(150)
         pos_x, pos_y = self.get_raw_world_coor(omit_offset=True)
-        self.screen.blit(tile_img, (pos_x, pos_y))
+        self.screen.blit(
+            tile_img, (pos_x - tile_img.width // 2, pos_y - tile_img.height // 2)
+        )
 
     def plot_tile_ongrid(self):
         pos = self.convert_coor_to_grid()
@@ -238,8 +242,10 @@ class Editor:
         self.tilemap.tilemap.pop(pos, None)
 
     def plot_tile_offgrid(self):
-        pos = self.get_raw_world_coor()
+        w, h = self.get_current_tile_image().size
         ttype = self.tilelist[self.tile_group]
+        pos_x, pos_y = self.get_raw_world_coor()
+        pos = (pos_x - w // 2, pos_y - h // 2)
         self.tilemap.offgrid_tiles.append(
             Tile(ttype, pos, self.tile_variant, self.tile_rotation)
         )
