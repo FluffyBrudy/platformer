@@ -152,8 +152,6 @@ class Player(PhysicsEntity):
         elif self.collisions["left"] or self.collisions["right"]:
             self.set_action("wallslide")
             self.wallslide = True
-        else:
-            self.set_action("jump")
 
         if self.wallslide:
             self.velocity.y = min(self.velocity.y, 1.1)
@@ -171,9 +169,10 @@ class Player(PhysicsEntity):
             self.velocity.x = max(self.velocity.x - 0.1, 0)
 
         if self.collisions["down"]:
-            self.velocity *= 0 
-            
-        pgdebug(f"velocity={self.velocity}, down={self.collisions["down"]}")
+            self.velocity *= 0
+        elif not (self.collisions["left"] or self.collisions["right"]):
+            self.set_action("jump")
+            self.wallslide = False
 
     def jump(
         self, energy=0.0, force_jump=False
