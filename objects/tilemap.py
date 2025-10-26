@@ -187,7 +187,6 @@ class Tilemap:
             with open(path, "r") as file:
                 data = json.load(file)
 
-            # Parse tilemap directly
             self.tilemap = {}
             for key, tile_data in data.get("tilemap", {}).items():
                 pos = cast(Tuple[int, int], tuple(int(n) for n in key.split(",")))
@@ -198,13 +197,11 @@ class Tilemap:
                     rotation=tile_data.get("rotation", 0),
                 )
 
-            # Parse offgrid tiles directly
             self.offgrid_tiles = [
                 Tile(ttype=t[0], pos=tuple(t[1]), variant=t[2], rotation=t[3])
                 for t in data.get("offgrid", [])
             ]
 
-            # Set tile size
             self.tile_size = data.get("tile_size", self.tile_size)
 
             print(f"Tilemap loaded from {path}")

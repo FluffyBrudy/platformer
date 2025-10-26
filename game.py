@@ -4,6 +4,7 @@ from objects.cloud import CloudGroup
 from objects.particles import Particle
 from objects.entities import Player
 from objects.tilemap import Tilemap
+from pgdebug import Debug
 from utils.animation import Animation
 from utils.image_utils import load_image, load_images, load_key_images
 from constants import ASSETS_PATH, BASE_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
@@ -93,6 +94,8 @@ class Game:
         # spawns
         self.spawn_leafs_rects()
 
+        Debug.change_font(25)
+
     def spawn_leafs_rects(self):
         self.leaf_spawners: List[pygame.Rect] = []
 
@@ -144,6 +147,7 @@ class Game:
         self.tilemap.render(self.screen, offset=self.scroll)
         self.player.render(self.screen, offset=self.scroll)
         Particle.draw_particles(self.screen, self.scroll)  # type:ignore
+        Debug.draw_all(self.screen)
 
     def run(self):
         while self.running:

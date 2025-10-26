@@ -3,6 +3,7 @@ import pygame
 from typing import TYPE_CHECKING, List, Literal, Tuple, Union
 from constants import BASE_SPEED
 from pgdebug import pgdebug, pgdebug_rect
+from utils.math_utils import sign
 
 if TYPE_CHECKING:
     from game import Game
@@ -27,7 +28,7 @@ class PhysicsEntity:
         self.flipped = False
         self.set_action("idle")
 
-        self.hitbox_offset = (10, 0)
+        self.hitbox_offset = (8, 0)
         self.hitbox_size = (self.size[0] - 2 * self.hitbox_offset[0], self.size[1])
 
     @property
@@ -58,20 +59,26 @@ class PhysicsEntity:
     def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
         self.collisions = {"up": False, "down": False, "left": False, "right": False}
 
-        frame_movement_x = (movement[0] + (self.velocity.x)) * (dt * BASE_SPEED)
-        frame_movement_y = (movement[1] + (self.velocity.y)) * (dt * BASE_SPEED)
+        frame_movement_x = round(
+            (movement[0] + (self.velocity.x)) * (dt * BASE_SPEED), 2
+        )
+        frame_movement_y = round(
+            (movement[1] + (self.velocity.y)) * (dt * BASE_SPEED), 2
+        )
+
+        pgdebug(f"frame_movement={frame_movement_x, frame_movement_y}")
 
         self.pos[0] += frame_movement_x  # type:ignore
         entity_rect = self.collision_rect
         delta = 0
         for rect in tilemap.physics_rects_around(self.pos):  # type: ignore
             if entity_rect.colliderect(rect):
-                if movement[0] > 0:
+                if frame_movement_x > 0:
                     delta = rect.left - entity_rect.right - 1
                     self.collisions["right"] = True
                     self.pos[0] += delta  # type: ignore
                     break
-                elif movement[0] < 0:
+                elif frame_movement_x < 0:
                     delta = rect.right - entity_rect.left
                     self.collisions["left"] = True
                     self.pos[0] += delta  # type: ignore
@@ -112,16 +119,6 @@ class PhysicsEntity:
             if probe_rect.colliderect(rect):
                 self.collisions[collision_side] = True
 
-        if not self.collisions["down"] and movement[0] != 0:
-            self.set_action("jump")  # TODO: jump state when falling
-        if not self.collisions["down"] and (
-            self.collisions["left"] or self.collisions["right"]
-        ):
-            self.set_action("wallslide")
-            self.velocity.y = min(self.velocity.y, 1.1)
-        elif not self.collisions["down"]:
-            self.set_action("jump")
-
         self.animation.update()
 
     def render(
@@ -141,18 +138,46 @@ class Player(PhysicsEntity):
         self, game: "Game", etype: str, pos: Tuple[int, int], size: Tuple[int, int]
     ) -> None:
         super().__init__(game, etype, pos, size)
-        self.air_time = 0
+        self.wallslide = False
+        self.prev_movement = 1
 
     def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
         super().update(dt, tilemap, movement)
+        mx = movement[0]
 
         if self.collisions["down"]:
-            if movement[0] != 0:
-                self.set_action("run")
-            else:
-                self.set_action("idle")
-
-    def jump(self, energy=0.0, debug=1):
-        if self.collisions["down"] or debug:
+            self.velocity.x = 0
+            self.velocity.y = 0
+            self.set_action("run" if mx else "idle")
+        elif self.collisions["left"] or self.collisions["right"]:
+            self.set_action("wallslide")
+            self.wallslide = True
+        else:
             self.set_action("jump")
-            self.velocity.y = -3 - abs(energy)
+
+        if self.wallslide:
+            self.velocity.y = min(self.velocity.y, 1.1)
+            if (self.prev_movement, mx) in ((-1, 1), (1, -1)):
+                self.velocity.x = -self.prev_movement * 1.5
+                self.wallslide = False
+                self.velocity.y = -3
+
+        if mx and self.prev_movement != mx:
+            self.prev_movement = mx
+
+        if self.velocity.x < 0:
+            self.velocity.x = min(self.velocity.x + 0.1, 0)
+        elif self.velocity.x > 0:
+            self.velocity.x = max(self.velocity.x - 0.1, 0)
+
+        if self.collisions["down"]:
+            self.velocity *= 0 
+            
+        pgdebug(f"velocity={self.velocity}, down={self.collisions["down"]}")
+
+    def jump(
+        self, energy=0.0, force_jump=False
+    ):  # TODO: remove force jump or set to false
+        if self.collisions["down"] or force_jump or self.wallslide:
+            self.set_action("jump")
+            self.velocity.y = -3 - abs(energy)  # type: ignore

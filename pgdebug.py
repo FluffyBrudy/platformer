@@ -23,6 +23,11 @@ class Debug:
         _DEBUG_REFS.clear()
 
     @staticmethod
+    def change_font(size: int):
+        global font
+        font = pygame.font.SysFont(None, size)
+
+    @staticmethod
     def draw_all(surface: pygame.Surface):
         """Draws all registered debug visuals."""
         if not _DEBUG_REFS:
