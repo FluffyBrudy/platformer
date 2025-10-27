@@ -1,7 +1,14 @@
 from enum import Enum, auto
 import pygame
 from typing import TYPE_CHECKING, List, Literal, Tuple, Union
-from constants import BASE_SPEED
+from constants import (
+    BASE_DECAY_FACTOR,
+    BASE_SPEED,
+    DASH_DECAY_THRESHOLD,
+    DASH_POWER,
+    DASH_SPEED_MULT,
+    JUMP_BASE,
+)
 from pgdebug import pgdebug, pgdebug_rect
 from utils.math_utils import sign
 
@@ -23,12 +30,13 @@ class PhysicsEntity:
         self.size = size
         self.velocity = pygame.Vector2(0, 0)
         self.collisions = {"up": False, "down": False, "left": False, "right": False}
+        self.probe_offsets = {"down": (0, 1), "left": (-1, 0), "right": (1, 0)}
 
         self.action: TActions = ""
         self.flipped = False
         self.set_action("idle")
 
-        self.hitbox_offset = (8, 0)
+        self.hitbox_offset = (7, 0)
         self.hitbox_size = (self.size[0] - 2 * self.hitbox_offset[0], self.size[1])
 
     @property
@@ -56,17 +64,23 @@ class PhysicsEntity:
         elif movement[0] > 0:
             self.flipped = False
 
+    def probe(self, tiles_around: List[pygame.Rect]):
+        for side, offset in self.probe_offsets.items():
+            probe_rect = self.collision_rect.move(offset)
+            for rect in tiles_around:
+                if probe_rect.colliderect(rect):
+                    self.collisions[side] = True
+                    break
+
     def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
         self.collisions = {"up": False, "down": False, "left": False, "right": False}
 
         frame_movement_x = round(
-            (movement[0] + (self.velocity.x)) * (dt * BASE_SPEED), 2
+            (movement[0] + (self.velocity.x)) * (dt * BASE_SPEED * 1.5), 2
         )
         frame_movement_y = round(
             (movement[1] + (self.velocity.y)) * (dt * BASE_SPEED), 2
         )
-
-        pgdebug(f"frame_movement={frame_movement_x, frame_movement_y}")
 
         self.pos[0] += frame_movement_x  # type:ignore
         entity_rect = self.collision_rect
@@ -74,7 +88,7 @@ class PhysicsEntity:
         for rect in tilemap.physics_rects_around(self.pos):  # type: ignore
             if entity_rect.colliderect(rect):
                 if frame_movement_x > 0:
-                    delta = rect.left - entity_rect.right - 1
+                    delta = rect.left - entity_rect.right
                     self.collisions["right"] = True
                     self.pos[0] += delta  # type: ignore
                     break
@@ -103,23 +117,11 @@ class PhysicsEntity:
 
         self.handle_flipping(movement)
 
-        probe_rect = self.collision_rect.move(0, 1)
         tiles_around = tilemap.physics_rects_around(self.pos)  # type: ignore
-
-        for rect in tiles_around:
-            if probe_rect.colliderect(rect):
-                self.collisions["down"] = True
-                break
-
-        flip_dir = -1 if self.flipped else 1
-
-        collision_side = "left" if self.flipped else "right"
-        probe_rect = self.collision_rect.move(flip_dir, 0)
-        for rect in tiles_around:
-            if probe_rect.colliderect(rect):
-                self.collisions[collision_side] = True
+        self.probe(tiles_around)
 
         self.animation.update()
+        pgdebug(f"collision={self.collisions}")
 
     def render(
         self,
@@ -140,6 +142,7 @@ class Player(PhysicsEntity):
         super().__init__(game, etype, pos, size)
         self.wallslide = False
         self.prev_movement = 1
+        self.dashing = 0
 
     def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
         super().update(dt, tilemap, movement)
@@ -156,7 +159,7 @@ class Player(PhysicsEntity):
         if self.wallslide:
             self.velocity.y = min(self.velocity.y, 1.1)
             if (self.prev_movement, mx) in ((-1, 1), (1, -1)):
-                self.velocity.x = -self.prev_movement * 1.5
+                self.velocity.x = -self.prev_movement * BASE_SPEED * dt
                 self.wallslide = False
                 self.velocity.y = -3
 
@@ -164,9 +167,9 @@ class Player(PhysicsEntity):
             self.prev_movement = mx
 
         if self.velocity.x < 0:
-            self.velocity.x = min(self.velocity.x + 0.1, 0)
+            self.velocity.x = min(self.velocity.x + BASE_DECAY_FACTOR, 0)
         elif self.velocity.x > 0:
-            self.velocity.x = max(self.velocity.x - 0.1, 0)
+            self.velocity.x = max(self.velocity.x - BASE_DECAY_FACTOR, 0)
 
         if self.collisions["down"]:
             self.velocity *= 0
@@ -174,9 +177,26 @@ class Player(PhysicsEntity):
             self.set_action("jump")
             self.wallslide = False
 
+        if self.dashing > 0:
+            self.dashing = max(self.dashing - 1, 0)
+        elif self.dashing < 0:
+            self.dashing = min(self.dashing + 1, 0)
+
+        abs_dash = abs(self.dashing)
+        if abs_dash > DASH_DECAY_THRESHOLD:
+            self.velocity[0] = sign(self.dashing) * BASE_SPEED * dt * DASH_SPEED_MULT
+            if abs_dash == 51:
+                self.velocity.x *= BASE_DECAY_FACTOR
+
     def jump(
         self, energy=0.0, force_jump=False
     ):  # TODO: remove force jump or set to false
-        if self.collisions["down"] or force_jump or self.wallslide:
+        if self.collisions["down"] or force_jump:
             self.set_action("jump")
-            self.velocity.y = -3 - abs(energy)  # type: ignore
+            self.velocity.y = JUMP_BASE - abs(energy)  # type: ignore
+
+    def dash(self):
+        if self.dashing:
+            return
+        dash_dir = -1 if self.flipped else 1
+        self.dashing = dash_dir * DASH_POWER
