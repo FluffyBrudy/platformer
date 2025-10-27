@@ -38,7 +38,7 @@ class Game:
                 load_images(ASSETS_PATH / "particles" / "leaf", 2), 0.05, False
             ),
             "particles/particle": Animation(
-                load_images(ASSETS_PATH / "particles" / "particle")
+                load_images(ASSETS_PATH / "particles" / "particle"), 0.1, False
             ),
             "background": load_image(
                 ASSETS_PATH / "background.png", (SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -130,7 +130,7 @@ class Game:
         self.clouds.update(dt)
         self.player.update(dt, self.tilemap, movement)
         Particle.spawn_leafs(self, self.leaf_spawners)
-        Particle.update_leafs(dt)
+        Particle.update_particles(dt)
         self.camera_movement()
 
     def camera_movement(self):

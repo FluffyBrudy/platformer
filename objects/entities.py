@@ -9,6 +9,7 @@ from constants import (
     DASH_SPEED_MULT,
     JUMP_BASE,
 )
+from objects.particles import Particle
 from pgdebug import pgdebug, pgdebug_rect
 from utils.math_utils import sign
 
@@ -186,8 +187,11 @@ class Player(PhysicsEntity):
         abs_dash = abs(self.dashing)
         if abs_dash > DASH_DECAY_THRESHOLD:
             self.velocity[0] = sign(self.dashing) * BASE_SPEED * dt * DASH_SPEED_MULT
-            if abs_dash == 51:
+            if abs_dash == DASH_DECAY_THRESHOLD + 1:
                 self.velocity.x *= BASE_DECAY_FACTOR
+            particle_vel = (self.velocity.x / 2, self.velocity.y)
+            particle = Particle(self.game, "particle", self.rect.center, particle_vel)
+            Particle.add_particles(particle)
 
     def _wall_jump(self, dt: float, speed_scale: float = 1.0):
         self.velocity.x = -self.prev_movement * BASE_SPEED * dt * speed_scale
@@ -204,7 +208,15 @@ class Player(PhysicsEntity):
             self._wall_jump(dt, 2.0)
 
     def dash(self):
-        if self.dashing:
+        if self.dashing > 1:
             return
         dash_dir = -1 if self.flipped else 1
         self.dashing = dash_dir * DASH_POWER
+
+    def render(
+        self,
+        surface: pygame.Surface,
+        offset: Union[pygame.Vector2, Tuple[float, float]],
+    ):
+        if abs(self.dashing) <= DASH_DECAY_THRESHOLD:
+            super().render(surface, offset)

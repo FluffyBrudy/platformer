@@ -1,6 +1,6 @@
 from random import choice, random
 from typing import TYPE_CHECKING, List, Literal, Sequence, Tuple
-from pygame import Rect, Surface
+from pygame import Rect, Surface, Vector2
 from constants import BASE_SPEED, TILE_SIZE
 from utils.math_utils import natural_x
 
@@ -11,20 +11,24 @@ if TYPE_CHECKING:
 
 class Particle:
     leaf_group = []
-    other_particle_group = []
+    other_particle_group: List["Particle"] = []
+    game_instance: "Game" = None  # type: ignore
 
     def __init__(
         self,
         game: "Game",
         ptype: Literal["particle", "leaf"],
         pos: Tuple[int, int],
-        velocity: Tuple[float, float] = (0, 0),
+        velocity: Tuple[float, float] | Vector2 = (0, 0),
     ):
         offset_dir = choice((0, 0.5, 1))
-        self.game = game
+        if not Particle.game_instance:
+            Particle.game_instance = game
         self.type = ptype
         self.velocity = velocity
-        self.animation: "Animation" = self.game.assets["particles/" + ptype].copy()
+        self.animation: "Animation" = Particle.game_instance.assets[
+            "particles/" + ptype
+        ].copy()
         self.pos: List[float] = [
             pos[0] + offset_dir * TILE_SIZE[0],
             pos[1],
@@ -43,6 +47,10 @@ class Particle:
         pos_x = self.pos[0] - offset[0]
         pos_y = self.pos[1] - offset[1]
         surface.blit(self.animation.get_frame(), (pos_x, pos_y))
+
+    @classmethod
+    def add_particles(cls, particle: "Particle"):
+        cls.other_particle_group.append(particle)
 
     @classmethod
     def spawn_leafs(cls, game: "Game", rects: Sequence[Rect]):
@@ -70,6 +78,13 @@ class Particle:
 
         for leaf in cls.leaf_group:
             leaf.pos[0] += noise  # type: ignore
+
+    @classmethod
+    def update_particles(cls, dt: float):
+        Particle.update_leafs(dt)
+        cls.other_particle_group = [
+            particle for particle in cls.other_particle_group if not particle.update(dt)
+        ]
 
     @classmethod
     def draw_particles(cls, surf: Surface, scroll: Tuple[int, int]):
