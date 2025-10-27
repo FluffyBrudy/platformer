@@ -152,16 +152,16 @@ class Player(PhysicsEntity):
             self.velocity.x = 0
             self.velocity.y = 0
             self.set_action("run" if mx else "idle")
-        elif self.collisions["left"] or self.collisions["right"]:
+        elif (self.collisions["left"] and self.flipped) or (
+            self.collisions["right"] and not self.flipped
+        ):
             self.set_action("wallslide")
             self.wallslide = True
 
         if self.wallslide:
             self.velocity.y = min(self.velocity.y, 1.1)
             if (self.prev_movement, mx) in ((-1, 1), (1, -1)):
-                self.velocity.x = -self.prev_movement * BASE_SPEED * dt
-                self.wallslide = False
-                self.velocity.y = -3
+                self._wall_jump(dt)
 
         if mx and self.prev_movement != mx:
             self.prev_movement = mx
@@ -172,7 +172,8 @@ class Player(PhysicsEntity):
             self.velocity.x = max(self.velocity.x - BASE_DECAY_FACTOR, 0)
 
         if self.collisions["down"]:
-            self.velocity *= 0
+            self.velocity.x = 0
+            self.velocity.y = 0
         elif not (self.collisions["left"] or self.collisions["right"]):
             self.set_action("jump")
             self.wallslide = False
@@ -188,12 +189,19 @@ class Player(PhysicsEntity):
             if abs_dash == 51:
                 self.velocity.x *= BASE_DECAY_FACTOR
 
+    def _wall_jump(self, dt: float, speed_scale: float = 1.0):
+        self.velocity.x = -self.prev_movement * BASE_SPEED * dt * speed_scale
+        self.wallslide = False
+        self.velocity.y = -3
+
     def jump(
-        self, energy=0.0, force_jump=False
+        self, dt: float, energy=0.0, force_jump=False
     ):  # TODO: remove force jump or set to false
         if self.collisions["down"] or force_jump:
             self.set_action("jump")
             self.velocity.y = JUMP_BASE - abs(energy)  # type: ignore
+        if self.wallslide:
+            self._wall_jump(dt, 2.0)
 
     def dash(self):
         if self.dashing:

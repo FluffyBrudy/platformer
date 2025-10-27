@@ -10,14 +10,13 @@ from utils.image_utils import load_image, load_images, load_key_images
 from constants import ASSETS_PATH, BASE_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from constants import TILE_SIZE
 
-# from pprint import pprint
-
 
 class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.Clock()
+        self.dt = 0
 
         self.running = True
         self.movement = [False, False]
@@ -122,7 +121,9 @@ class Game:
                 if event.key == pygame.K_RIGHT:
                     self.movement[1] = False
                 if event.key == pygame.K_UP:
-                    self.player.jump(energy=0.5)
+                    self.player.jump(self.dt, energy=0)
+                if event.key == pygame.K_SPACE:
+                    self.player.dash()
 
     def update(self, dt: float):
         movement = (self.movement[1] - self.movement[0], 0)
@@ -151,10 +152,10 @@ class Game:
 
     def run(self):
         while self.running:
-            dt = self.clock.tick(FPS) / 1000.0
+            self.dt = self.clock.tick(FPS) / 1000.0
             self.screen.blit(self.assets["background"], (0, 0))
             self.handle_event()
-            self.update(dt)
+            self.update(self.dt)
             self.draw()
             pygame.display.flip()
         pygame.quit()
