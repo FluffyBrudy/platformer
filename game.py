@@ -115,7 +115,7 @@ class Game:
                     self.movement[0] = True
                 if event.key == pygame.K_RIGHT:
                     self.movement[1] = True
-            elif event.type == pygame.KEYUP:
+            if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
                     self.movement[0] = False
                 if event.key == pygame.K_RIGHT:
