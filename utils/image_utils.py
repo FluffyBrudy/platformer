@@ -2,7 +2,7 @@ import sys
 import re
 import pygame
 from pathlib import Path
-from typing import Sequence, Tuple, Union
+from typing import Dict, Sequence, Tuple, Union
 from constants import Color
 
 
@@ -51,7 +51,7 @@ def load_key_images(
 
     Args:
         dir_path (Path): The directory to extract images
-        key_index (Optional[Iterable[int]]): character at index to use as key, make sure file name has number prefix
+        key_index (Optional[Iterable[int]]): character at index to use as key, make sure file name has number prefix for best or at lest number character at any index
 
     Returns:
         Dict[str, pygame.Surface]
@@ -65,7 +65,15 @@ def load_key_images(
     )
     st_index = key_index[0]
     end_index = max(st_index + 1, len(key_index) - 1)
-    return {img.stem[st_index:end_index]: load_image(img, scale) for img in sorted_path}
+
+    res: Dict[str, pygame.Surface] = {}
+    for img in sorted_path:
+        key = img.stem[st_index : end_index + 1]
+        if len(key) > 1 and key[0] == "0":
+            key = key[1 : len(key)]
+        value = load_image(img, scale)
+        res[key] = value
+    return res
 
 
 """

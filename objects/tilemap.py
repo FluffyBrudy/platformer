@@ -174,7 +174,6 @@ class Tilemap:
                     "tile_size": self.tile_size,
                 },
                 fp,
-                indent=4,
             )
         print(f"Tilemap saved to {path}")
 

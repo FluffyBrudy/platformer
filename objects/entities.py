@@ -151,12 +151,10 @@ class Player(PhysicsEntity):
         mx = movement[0]
         pgdebug(f"frame={self.prev_movement}")
 
-        if self.collisions["down"]:
-            self.velocity.x = 0
-            self.velocity.y = 0
-            self.set_action("run" if mx else "idle")
-        elif (self.collisions["left"] and self.flipped) or (
-            self.collisions["right"] and not self.flipped
+        if (
+            not self.collisions["down"]
+            and (self.collisions["left"] and self.flipped)
+            or (self.collisions["right"] and not self.flipped)
         ):
             self.set_action("wallslide")
             self.wallslide = True
@@ -175,6 +173,14 @@ class Player(PhysicsEntity):
         self._handle_velocity_resistance()
         self._handle_dash_friction()
         self._handle_dash(dt)
+
+        # just for correction
+        if self.collisions["down"]:
+            self.wallslide = False
+            if not self.dash:
+                self.velocity.x = 0
+            self.velocity.y = 0
+            self.set_action("run" if mx else "idle")
 
         pgdebug(f"dashing={self.dashing}")
 
@@ -205,7 +211,7 @@ class Player(PhysicsEntity):
             speed = random() * 0.5 + 0.5
             particle_vel = (cos(angle) * speed, sin(angle) * speed)
             particle = Particle(
-                self.game, "dash", self.collision_rect.center, particle_vel
+                self.game, "dash", self.collision_rect.midbottom, particle_vel
             )
             particle.animation.change_frame(randint(0, 7))
             Particle.add_particles(particle)
