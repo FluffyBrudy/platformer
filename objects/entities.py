@@ -160,6 +160,8 @@ class Player(PhysicsEntity):
         ):
             self.set_action("wallslide")
             self.wallslide = True
+            self.dashing = 0
+            self.velocity.x = 0
 
         if self.wallslide:
             self.velocity.y = min(self.velocity.y, 1.1)
@@ -169,11 +171,14 @@ class Player(PhysicsEntity):
         if mx and self.prev_movement != mx:
             self.prev_movement = mx
 
-        if self.velocity.x < 0:
-            self.velocity.x = min(self.velocity.x + BASE_DECAY_FACTOR, 0)
-        elif self.velocity.x > 0:
-            self.velocity.x = max(self.velocity.x - BASE_DECAY_FACTOR, 0)
+        self._handle_motion_state()
+        self._handle_velocity_resistance()
+        self._handle_dash_friction()
+        self._handle_dash(dt)
 
+        pgdebug(f"dashing={self.dashing}")
+
+    def _handle_motion_state(self):
         if self.collisions["down"]:
             self.velocity.x = 0
             self.velocity.y = 0
@@ -181,30 +186,37 @@ class Player(PhysicsEntity):
             self.set_action("jump")
             self.wallslide = False
 
+    def _handle_velocity_resistance(self):
+        if self.velocity.x < 0:
+            self.velocity.x = min(self.velocity.x + BASE_DECAY_FACTOR, 0)
+        elif self.velocity.x > 0:
+            self.velocity.x = max(self.velocity.x - BASE_DECAY_FACTOR, 0)
+
+    def _handle_dash(self, dt: float):
+        abs_dash = abs(self.dashing)
+        if not abs(self.dashing):
+            return
+        if abs_dash > DASH_DECAY_THRESHOLD:
+            self.velocity[0] = sign(self.dashing) * BASE_SPEED * dt * DASH_SPEED_MULT
+            if abs_dash == DASH_DECAY_THRESHOLD + 1:
+                self.velocity.x *= BASE_DECAY_FACTOR * 0.5
+        if (abs_dash - DASH_DECAY_THRESHOLD) <= -2:
+            angle = random() * 2 * pi
+            speed = random() * 0.5 + 0.5
+            particle_vel = (cos(angle) * speed, sin(angle) * speed)
+            particle = Particle(
+                self.game, "dash", self.collision_rect.center, particle_vel
+            )
+            particle.animation.change_frame(randint(0, 7))
+            Particle.add_particles(particle)
+
+    def _handle_dash_friction(self):
         if self.dashing > 0:
             self.dashing = max(self.dashing - 1, 0)
         elif self.dashing < 0:
             self.dashing = min(self.dashing + 1, 0)
         if self.collisions["left"] or self.collisions["right"]:
             self.dashing = 0
-
-        abs_dash = abs(self.dashing)
-        if abs_dash:
-            if abs_dash > DASH_DECAY_THRESHOLD:
-                self.velocity[0] = (
-                    sign(self.dashing) * BASE_SPEED * dt * DASH_SPEED_MULT
-                )
-                if abs_dash == DASH_DECAY_THRESHOLD + 1:
-                    self.velocity.x *= BASE_DECAY_FACTOR * 0.5
-            if (abs_dash - DASH_DECAY_THRESHOLD) <= -2:
-                angle = random() * 2 * pi
-                speed = random() * 0.5 + 0.5
-                particle_vel = (cos(angle) * speed, sin(angle) * speed)
-                particle = Particle(
-                    self.game, "dash", self.collision_rect.center, particle_vel
-                )
-                particle.animation.change_frame(randint(0, 7))
-                Particle.add_particles(particle)
 
     def _wall_jump(self, dt: float, speed_scale: float = 1.0):
         self.velocity.x = -self.prev_movement * BASE_SPEED * dt * speed_scale

@@ -47,8 +47,8 @@ class Particle:
 
     def render(self, surface: Surface, offset=(0, 0)):
         frame = self.animation.get_frame()
-        pos_x = self.pos[0] - offset[0] - frame.height // 2
-        pos_y = self.pos[1] - offset[1] - frame.width // 2
+        pos_x = self.pos[0] - offset[0] - frame.width
+        pos_y = self.pos[1] - offset[1] - frame.height // 1
         surface.blit(frame, (pos_x, pos_y))
 
     @classmethod
