@@ -38,7 +38,7 @@ class Game:
                 load_images(ASSETS_PATH / "particles" / "leaf", 2), 0.05, False
             ),
             "particles/particle": Animation(
-                load_images(ASSETS_PATH / "particles" / "particle"), 0.1, False
+                load_images(ASSETS_PATH / "particles" / "particle"), 0.05, False
             ),
             "background": load_image(
                 ASSETS_PATH / "background.png", (SCREEN_WIDTH, SCREEN_HEIGHT)

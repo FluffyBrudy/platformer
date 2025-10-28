@@ -26,7 +26,9 @@ class Animation:
                 self.frame_index = self.frameslen
 
     def get_frame(self):
-        frame_index = int(self.frame_index) % self.frameslen
+        frame_index = int(self.frame_index)
+        if not self.loop and frame_index >= self.frameslen:
+            return self.frames[self.frameslen - 1]
         return self.frames[frame_index]
 
     def has_animation_end(self):

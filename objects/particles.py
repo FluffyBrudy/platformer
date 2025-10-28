@@ -8,6 +8,8 @@ if TYPE_CHECKING:
     from game import Game
     from utils.animation import Animation
 
+particle_map = {"leaf": "leaf", "dash": "particle"}
+
 
 class Particle:
     leaf_group = []
@@ -17,7 +19,7 @@ class Particle:
     def __init__(
         self,
         game: "Game",
-        ptype: Literal["particle", "leaf"],
+        ptype: Literal["dash", "leaf"],
         pos: Tuple[int, int],
         velocity: Tuple[float, float] | Vector2 = (0, 0),
     ):
@@ -27,7 +29,7 @@ class Particle:
         self.type = ptype
         self.velocity = velocity
         self.animation: "Animation" = Particle.game_instance.assets[
-            "particles/" + ptype
+            "particles/" + particle_map[ptype]
         ].copy()
         self.pos: List[float] = [
             pos[0] + offset_dir * TILE_SIZE[0],
@@ -44,9 +46,10 @@ class Particle:
         return kill
 
     def render(self, surface: Surface, offset=(0, 0)):
-        pos_x = self.pos[0] - offset[0]
-        pos_y = self.pos[1] - offset[1]
-        surface.blit(self.animation.get_frame(), (pos_x, pos_y))
+        frame = self.animation.get_frame()
+        pos_x = self.pos[0] - offset[0] - frame.height // 2
+        pos_y = self.pos[1] - offset[1] - frame.width // 2
+        surface.blit(frame, (pos_x, pos_y))
 
     @classmethod
     def add_particles(cls, particle: "Particle"):

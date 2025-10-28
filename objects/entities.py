@@ -1,4 +1,6 @@
 from enum import Enum, auto
+from math import cos, pi, sin
+from random import randint, random
 import pygame
 from typing import TYPE_CHECKING, List, Literal, Tuple, Union
 from constants import (
@@ -122,7 +124,6 @@ class PhysicsEntity:
         self.probe(tiles_around)
 
         self.animation.update()
-        pgdebug(f"collision={self.collisions}")
 
     def render(
         self,
@@ -148,6 +149,7 @@ class Player(PhysicsEntity):
     def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
         super().update(dt, tilemap, movement)
         mx = movement[0]
+        pgdebug(f"frame={self.prev_movement}")
 
         if self.collisions["down"]:
             self.velocity.x = 0
@@ -183,15 +185,26 @@ class Player(PhysicsEntity):
             self.dashing = max(self.dashing - 1, 0)
         elif self.dashing < 0:
             self.dashing = min(self.dashing + 1, 0)
+        if self.collisions["left"] or self.collisions["right"]:
+            self.dashing = 0
 
         abs_dash = abs(self.dashing)
-        if abs_dash > DASH_DECAY_THRESHOLD:
-            self.velocity[0] = sign(self.dashing) * BASE_SPEED * dt * DASH_SPEED_MULT
-            if abs_dash == DASH_DECAY_THRESHOLD + 1:
-                self.velocity.x *= BASE_DECAY_FACTOR
-            particle_vel = (self.velocity.x / 2, self.velocity.y)
-            particle = Particle(self.game, "particle", self.rect.center, particle_vel)
-            Particle.add_particles(particle)
+        if abs_dash:
+            if abs_dash > DASH_DECAY_THRESHOLD:
+                self.velocity[0] = (
+                    sign(self.dashing) * BASE_SPEED * dt * DASH_SPEED_MULT
+                )
+                if abs_dash == DASH_DECAY_THRESHOLD + 1:
+                    self.velocity.x *= BASE_DECAY_FACTOR * 0.5
+            if (abs_dash - DASH_DECAY_THRESHOLD) <= -2:
+                angle = random() * 2 * pi
+                speed = random() * 0.5 + 0.5
+                particle_vel = (cos(angle) * speed, sin(angle) * speed)
+                particle = Particle(
+                    self.game, "dash", self.collision_rect.center, particle_vel
+                )
+                particle.animation.change_frame(randint(0, 7))
+                Particle.add_particles(particle)
 
     def _wall_jump(self, dt: float, speed_scale: float = 1.0):
         self.velocity.x = -self.prev_movement * BASE_SPEED * dt * speed_scale
@@ -208,7 +221,7 @@ class Player(PhysicsEntity):
             self._wall_jump(dt, 2.0)
 
     def dash(self):
-        if self.dashing > 1:
+        if self.dashing > 1 or (self.collisions["left"] or self.collisions["right"]):
             return
         dash_dir = -1 if self.flipped else 1
         self.dashing = dash_dir * DASH_POWER

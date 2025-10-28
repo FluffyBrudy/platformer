@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 TEventMapKey = Tuple[int, Optional[int]]
 TEventMapValue = Callable[[Event], None]
 TEventMapType = Dict[TEventMapKey, TEventMapValue]
-TTileTypes = Literal["grass", "stone", "decor", "largedecor"]
+TTileTypes = Literal["grass", "stone", "decor", "largedecor", "spawners"]
 
 
 class Editor:
@@ -43,6 +43,7 @@ class Editor:
             "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", 2),
             "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", 2),
             "largedecor": load_key_images(ASSETS_PATH / "tiles" / "large_decor", 2),
+            "spawners": load_key_images(ASSETS_PATH / "entities" / "enemy" / "idle", 2),
         }
 
         # Tilemap
