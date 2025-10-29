@@ -1,8 +1,10 @@
 from enum import Enum, auto
 from math import cos, pi, sin
-from random import randint, random
+from random import choice, randint, random
 import pygame
 from typing import TYPE_CHECKING, List, Literal, Tuple, Union
+
+from pygame.display import flip
 from constants import (
     BASE_DECAY_FACTOR,
     BASE_SPEED,
@@ -58,10 +60,12 @@ class PhysicsEntity:
     def set_action(self, action: TActions):
         if self.action != action:
             self.action = action
-            self.animation: "Animation" = self.game.assets[f"player/{action}"].copy()
+            self.animation: "Animation" = self.game.assets[
+                f"{self.type}/{action}"
+            ].copy()
             self.size = self.animation.get_frame().size
 
-    def handle_flipping(self, movement: Tuple[int, int]):
+    def handle_flipping(self, movement: Tuple[float, float]):
         if movement[0] < 0:
             self.flipped = True
         elif movement[0] > 0:
@@ -75,7 +79,9 @@ class PhysicsEntity:
                     self.collisions[side] = True
                     break
 
-    def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
+    def update(
+        self, dt: float, tilemap: "Tilemap", movement: Tuple[float, float] = (0, 0)
+    ):
         self.collisions = {"up": False, "down": False, "left": False, "right": False}
 
         frame_movement_x = round(
@@ -137,16 +143,70 @@ class PhysicsEntity:
         surface.blit(img, pos)
 
 
+class Enemy(PhysicsEntity):
+    def __init__(
+        self, game: "Game", pos: Tuple[int, int], size: Tuple[int, int]
+    ) -> None:
+        super().__init__(game, "enemy", pos, size)
+        self.walking = 0
+        self.flipped = choice((True, False))
+
+    def update(
+        self, dt: float, tilemap: "Tilemap", movement: Tuple[float, float] = (0, 0)
+    ):
+        if self.collisions["down"]:
+            movement = self.movement(tilemap, movement)
+        super().update(dt, tilemap, movement=movement)
+
+    def movement(self, tilemap: "Tilemap", movement: Tuple[float, float]):
+        w = self.animation.get_frame().width
+        flip_dir = -1 if self.flipped else 1
+        front_x = self.rect.centerx + flip_dir * w // 2
+        feet_y = self.rect.bottom
+        front_ground = (front_x, feet_y)
+
+        if self.collisions["left"] or self.collisions["right"]:
+            self.flipped = not self.flipped
+        elif not tilemap.solid_tile_check(front_ground):
+            self.flipped = not self.flipped
+
+        movement_x_dir = -1 if self.flipped else 1
+        movement = (movement[0] + movement_x_dir * 0.5, movement[1])
+
+        if random() < 0.01 and not self.walking:
+            self.set_action("run")
+            self.walking = randint(int(BASE_SPEED * 0.3), BASE_SPEED)
+        self.walking = max(0, self.walking - 1)
+        if not self.walking and self.action != "run":
+            self.set_action("run")
+        return movement
+
+    def render(
+        self,
+        surface: pygame.Surface,
+        offset: Union[pygame.Vector2, Tuple[float, float]],
+    ):
+        gun_pos = (self.rect.centerx - offset[0], self.rect.centery - offset[1])
+        gun_surf = self.game.assets["gun"]
+        if self.flipped:
+            gun_surf = pygame.transform.flip(gun_surf, True, False)
+            gun_pos = (gun_pos[0] - gun_surf.width, gun_pos[1])
+        surface.blit(gun_surf, gun_pos)
+        super().render(surface, offset)
+
+
 class Player(PhysicsEntity):
     def __init__(
-        self, game: "Game", etype: str, pos: Tuple[int, int], size: Tuple[int, int]
+        self, game: "Game", pos: Tuple[int, int], size: Tuple[int, int]
     ) -> None:
-        super().__init__(game, etype, pos, size)
+        super().__init__(game, "player", pos, size)
         self.wallslide = False
         self.prev_movement = 1
         self.dashing = 0
 
-    def update(self, dt: float, tilemap: "Tilemap", movement: Tuple[int, int] = (0, 0)):
+    def update(
+        self, dt: float, tilemap: "Tilemap", movement: Tuple[float, float] = (0, 0)
+    ):
         super().update(dt, tilemap, movement)
         mx = movement[0]
         pgdebug(f"frame={self.prev_movement}")
@@ -230,7 +290,7 @@ class Player(PhysicsEntity):
         self.velocity.y = -3
 
     def jump(
-        self, dt: float, energy=0.0, force_jump=False
+        self, dt: float, energy=0.0, force_jump=True
     ):  # TODO: remove force jump or set to false
         if self.collisions["down"] or force_jump:
             self.set_action("jump")

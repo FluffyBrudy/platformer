@@ -60,6 +60,14 @@ class Tilemap:
         self.offgrid_cull_min_pos = Vector2(-2 * TILE_SIZE[0], -2 * TILE_SIZE[1])
         self.offgrid_cull_max_pos = Vector2(SCREEN_WIDTH, SCREEN_HEIGHT)
 
+    def solid_tile_check(self, pos: Tuple[int, int]):
+        tile_loc_x = int(pos[0] // self.tile_size[0])
+        tile_loc_y = int(pos[1] // self.tile_size[1])
+        tile_loc = (tile_loc_x, tile_loc_y)
+        if tile_loc in self.tilemap and Tile.is_physics_tile(self.tilemap[tile_loc]):
+            return self.tilemap[tile_loc]
+        return None
+
     def tiles_around(self, pos: Tuple[int, int]) -> List[Tile]:
         tiles = []
         tile_loc_x, tile_loc_y = (

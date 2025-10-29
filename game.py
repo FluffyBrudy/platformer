@@ -2,7 +2,7 @@ from typing import List
 import pygame
 from objects.cloud import CloudGroup
 from objects.particles import Particle
-from objects.entities import Player
+from objects.entities import Enemy, Player
 from objects.tilemap import Tilemap
 from pgdebug import Debug
 from utils.animation import Animation
@@ -33,7 +33,6 @@ class Game:
             "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", TILE_SIZE),
             "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", 2),
             "largedecor": load_key_images(ASSETS_PATH / "tiles" / "large_decor", 2),
-            "spawners": load_key_images(ASSETS_PATH / "tiles" / "spawners"),
             "particles/leaf": Animation(
                 load_images(ASSETS_PATH / "particles" / "leaf", 2), 0.05, False
             ),
@@ -43,8 +42,9 @@ class Game:
             "background": load_image(
                 ASSETS_PATH / "background.png", (SCREEN_WIDTH, SCREEN_HEIGHT)
             ),
-            "gun": load_image(ASSETS_PATH / "gun.png"),
+            "gun": load_image(ASSETS_PATH / "gun.png", (20, 10)),
             "projectile": load_image(ASSETS_PATH / "projectile.png"),
+            # player
             "player/idle": Animation(
                 load_images(
                     ASSETS_PATH / "entities" / "player" / "idle",
@@ -75,10 +75,17 @@ class Game:
                     scale=1.8,
                 )
             ),
+            # enemy
+            "enemy/idle": Animation(
+                load_images(ASSETS_PATH / "entities" / "enemy" / "idle", scale=1.8),
+            ),
+            "enemy/run": Animation(
+                load_images(ASSETS_PATH / "entities" / "enemy" / "run", scale=1.8),
+            ),
         }
 
         # player
-        self.player = Player(self, "player", (150, 50), self.assets["player"].size)
+        self.player = Player(self, (150, 50), self.assets["player"].size)
 
         # tilemap
         self.tilemap = Tilemap(self, TILE_SIZE[0])
@@ -89,11 +96,19 @@ class Game:
 
         # cloud groups
         self.clouds = CloudGroup(self.assets["clouds"])
+        self.enemies: List[Enemy] = []
 
         # spawns
         self.spawn_leafs_rects()
+        self.spawn_enemies()
+        print(self.tilemap.offgrid_tiles)
 
         Debug.change_font(25)
+
+    def spawn_enemies(self):
+        for enemy in self.tilemap.extract([("enemy", 1)], False):
+            enemy = Enemy(self, enemy.pos, self.assets["player"].size)
+            self.enemies.append(enemy)
 
     def spawn_leafs_rects(self):
         self.leaf_spawners: List[pygame.Rect] = []
@@ -129,6 +144,7 @@ class Game:
         movement = (self.movement[1] - self.movement[0], 0)
         self.clouds.update(dt)
         self.player.update(dt, self.tilemap, movement)
+        [enemy.update(self.dt, self.tilemap, (0, 0)) for enemy in self.enemies]
         Particle.spawn_leafs(self, self.leaf_spawners)
         Particle.update_particles(dt)
         self.camera_movement()
@@ -147,6 +163,7 @@ class Game:
         self.clouds.render(self.screen, offset=self.scroll)
         self.tilemap.render(self.screen, offset=self.scroll)
         self.player.render(self.screen, offset=self.scroll)
+        [enemy.render(self.screen, self.scroll) for enemy in self.enemies]
         Particle.draw_particles(self.screen, self.scroll)  # type:ignore
         Debug.draw_all(self.screen)
 
