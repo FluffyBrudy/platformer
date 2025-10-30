@@ -1,14 +1,17 @@
+from random import randint
 from typing import List
 import pygame
 from objects.cloud import CloudGroup
 from objects.particles import Particle
 from objects.entities import Enemy, Player
+from objects.projectile import Projectile
 from objects.tilemap import Tilemap
-from pgdebug import Debug
+from pgdebug import Debug, pgdebug
 from utils.animation import Animation
 from utils.image_utils import load_image, load_images, load_key_images
 from constants import ASSETS_PATH, BASE_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from constants import TILE_SIZE
+from utils.math_utils import sign
 
 
 class Game:
@@ -34,10 +37,10 @@ class Game:
             "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", 2),
             "largedecor": load_key_images(ASSETS_PATH / "tiles" / "large_decor", 2),
             "particles/leaf": Animation(
-                load_images(ASSETS_PATH / "particles" / "leaf", 2), 0.05, False
+                load_images(ASSETS_PATH / "particles" / "leaf", 2.5), 0.05, False
             ),
             "particles/particle": Animation(
-                load_images(ASSETS_PATH / "particles" / "particle"), 0.05, False
+                load_images(ASSETS_PATH / "particles" / "particle", 0.8), 0.05, False
             ),
             "background": load_image(
                 ASSETS_PATH / "background.png", (SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -48,39 +51,39 @@ class Game:
             "player/idle": Animation(
                 load_images(
                     ASSETS_PATH / "entities" / "player" / "idle",
-                    scale=1.8,
+                    scale=1.5,
                 ),
             ),
             "player/run": Animation(
                 load_images(
                     ASSETS_PATH / "entities" / "player" / "run",
-                    scale=1.8,
+                    scale=1.5,
                 )
             ),
             "player/jump": Animation(
                 load_images(
                     ASSETS_PATH / "entities" / "player" / "jump",
-                    scale=1.8,
+                    scale=1.5,
                 )
             ),
             "player/slide": Animation(
                 load_images(
                     ASSETS_PATH / "entities" / "player" / "slide",
-                    scale=1.8,
+                    scale=1.5,
                 )
             ),
             "player/wallslide": Animation(
                 load_images(
                     ASSETS_PATH / "entities" / "player" / "wall_slide",
-                    scale=1.8,
+                    scale=1.5,
                 )
             ),
             # enemy
             "enemy/idle": Animation(
-                load_images(ASSETS_PATH / "entities" / "enemy" / "idle", scale=1.8),
+                load_images(ASSETS_PATH / "entities" / "enemy" / "idle", scale=1.5),
             ),
             "enemy/run": Animation(
-                load_images(ASSETS_PATH / "entities" / "enemy" / "run", scale=1.8),
+                load_images(ASSETS_PATH / "entities" / "enemy" / "run", scale=1.5),
             ),
         }
 
@@ -98,10 +101,11 @@ class Game:
         self.clouds = CloudGroup(self.assets["clouds"])
         self.enemies: List[Enemy] = []
 
+        # projectiles
+
         # spawns
         self.spawn_leafs_rects()
         self.spawn_enemies()
-        print(self.tilemap.offgrid_tiles)
 
         Debug.change_font(25)
 
@@ -140,14 +144,20 @@ class Game:
                 if event.key == pygame.K_SPACE:
                     self.player.dash()
 
-    def update(self, dt: float):
-        movement = (self.movement[1] - self.movement[0], 0)
-        self.clouds.update(dt)
-        self.player.update(dt, self.tilemap, movement)
-        [enemy.update(self.dt, self.tilemap, (0, 0)) for enemy in self.enemies]
-        Particle.spawn_leafs(self, self.leaf_spawners)
-        Particle.update_particles(dt)
-        self.camera_movement()
+    def update_enemy(self):
+        player_pos = self.player.pos
+        for enemy in self.enemies:
+            enemy.update(self.dt, self.tilemap, (0, 0))
+            dist = player_pos[0] - enemy.pos[0]
+            if (
+                abs(dist) <= 200
+                and abs(enemy.pos[1] - self.player.pos[1]) <= TILE_SIZE[1] // 2
+            ):
+                enemy.walking = 0
+                enemy.flipped = dist < 0
+                if enemy.can_shoot():
+                    proj_dir = (sign(dist) * 2, 0)
+                    enemy.shoot_projectile(proj_dir)  # type:ignore
 
     def camera_movement(self):
         target_scroll_x = self.player.rect.centerx - self.screen.width / 2
@@ -159,12 +169,22 @@ class Game:
             self.scroll.y + int((target_scroll_y - self.scroll.y) * 0.05), 2
         )
 
-    def draw(self):
+    def render(self):
+        dt = self.dt
+        movement = (self.movement[1] - self.movement[0], 0)
+        self.clouds.update(dt)
+        self.player.update(dt, self.tilemap, movement)
+        Particle.spawn_leafs(self, self.leaf_spawners)
+        Particle.update_particles(dt)
+        self.update_enemy()
+        self.camera_movement()
+
         self.clouds.render(self.screen, offset=self.scroll)
         self.tilemap.render(self.screen, offset=self.scroll)
         self.player.render(self.screen, offset=self.scroll)
         [enemy.render(self.screen, self.scroll) for enemy in self.enemies]
         Particle.draw_particles(self.screen, self.scroll)  # type:ignore
+        Projectile.render_projectiles(self.screen, dt, self.scroll)  # type: ignore
         Debug.draw_all(self.screen)
 
     def run(self):
@@ -172,8 +192,7 @@ class Game:
             self.dt = self.clock.tick(FPS) / 1000.0
             self.screen.blit(self.assets["background"], (0, 0))
             self.handle_event()
-            self.update(self.dt)
-            self.draw()
+            self.render()
             pygame.display.flip()
         pygame.quit()
 

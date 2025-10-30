@@ -1,8 +1,7 @@
-from enum import Enum, auto
 from math import cos, pi, sin
 from random import choice, randint, random
 import pygame
-from typing import TYPE_CHECKING, List, Literal, Tuple, Union
+from typing import TYPE_CHECKING, List, Literal, Set, Tuple, Union
 
 from pygame.display import flip
 from constants import (
@@ -14,8 +13,10 @@ from constants import (
     JUMP_BASE,
 )
 from objects.particles import Particle
-from pgdebug import pgdebug, pgdebug_rect
+from objects.projectile import Projectile
+from pgdebug import pgdebug
 from utils.math_utils import sign
+from utils.timer import Timer
 
 if TYPE_CHECKING:
     from game import Game
@@ -27,7 +28,12 @@ TActions = Literal["idle", "jump", "slide", "run", "wallslide", ""]
 
 class PhysicsEntity:
     def __init__(
-        self, game: "Game", etype: str, pos: Tuple[int, int], size: Tuple[int, int]
+        self,
+        game: "Game",
+        etype: str,
+        pos: Tuple[int, int],
+        size: Tuple[int, int],
+        hitbox_offset: Tuple[int, int] = (0, 0),
     ) -> None:
         self.game = game
         self.type = etype
@@ -41,7 +47,7 @@ class PhysicsEntity:
         self.flipped = False
         self.set_action("idle")
 
-        self.hitbox_offset = (7, 0)
+        self.hitbox_offset = hitbox_offset
         self.hitbox_size = (self.size[0] - 2 * self.hitbox_offset[0], self.size[1])
 
     @property
@@ -150,6 +156,8 @@ class Enemy(PhysicsEntity):
         super().__init__(game, "enemy", pos, size)
         self.walking = 0
         self.flipped = choice((True, False))
+        self.projectiles: List["Projectile"] = []
+        self.projectile_timer = Timer(200)
 
     def update(
         self, dt: float, tilemap: "Tilemap", movement: Tuple[float, float] = (0, 0)
@@ -157,6 +165,25 @@ class Enemy(PhysicsEntity):
         if self.collisions["down"]:
             movement = self.movement(tilemap, movement)
         super().update(dt, tilemap, movement=movement)
+
+        for projectile in self.projectiles.copy():
+            if projectile.can_die(self.game.player):
+                projectile.remove(self.projectiles)
+
+    def can_shoot(self):
+        shootable = self.projectile_timer.has_reach_interval()
+        if shootable:
+            self.projectile_timer.reset_to_now()
+        return shootable
+
+    def shoot_projectile(self, velocity: Tuple[int, int]):
+        gun_pos = (self.rect.centerx, self.rect.centery)
+        gun_surf = self.game.assets["gun"]
+        if self.flipped:
+            gun_surf = pygame.transform.flip(gun_surf, True, False)
+            gun_pos = (gun_pos[0] - gun_surf.width, gun_pos[1])
+        projectile = Projectile(self.game, gun_pos, velocity)
+        self.projectiles.append(projectile)
 
     def movement(self, tilemap: "Tilemap", movement: Tuple[float, float]):
         w = self.animation.get_frame().width
@@ -171,14 +198,16 @@ class Enemy(PhysicsEntity):
             self.flipped = not self.flipped
 
         movement_x_dir = -1 if self.flipped else 1
-        movement = (movement[0] + movement_x_dir * 0.5, movement[1])
 
-        if random() < 0.01 and not self.walking:
+        if self.walking:
+            movement = (movement[0] + movement_x_dir * 0.5, movement[1])
             self.set_action("run")
+        elif random() < 0.01:
             self.walking = randint(int(BASE_SPEED * 0.3), BASE_SPEED)
+        else:
+            self.set_action("idle")
+
         self.walking = max(0, self.walking - 1)
-        if not self.walking and self.action != "run":
-            self.set_action("run")
         return movement
 
     def render(
@@ -186,12 +215,13 @@ class Enemy(PhysicsEntity):
         surface: pygame.Surface,
         offset: Union[pygame.Vector2, Tuple[float, float]],
     ):
-        gun_pos = (self.rect.centerx - offset[0], self.rect.centery - offset[1])
-        gun_surf = self.game.assets["gun"]
-        if self.flipped:
-            gun_surf = pygame.transform.flip(gun_surf, True, False)
-            gun_pos = (gun_pos[0] - gun_surf.width, gun_pos[1])
-        surface.blit(gun_surf, gun_pos)
+        if self.action != "run":
+            gun_pos = (self.rect.centerx - offset[0], self.rect.centery - offset[1])
+            gun_surf = self.game.assets["gun"]
+            if self.flipped:
+                gun_surf = pygame.transform.flip(gun_surf, True, False)
+                gun_pos = (gun_pos[0] - gun_surf.width, gun_pos[1])
+            surface.blit(gun_surf, gun_pos)
         super().render(surface, offset)
 
 
@@ -199,7 +229,7 @@ class Player(PhysicsEntity):
     def __init__(
         self, game: "Game", pos: Tuple[int, int], size: Tuple[int, int]
     ) -> None:
-        super().__init__(game, "player", pos, size)
+        super().__init__(game, "player", pos, size, (7, 0))
         self.wallslide = False
         self.prev_movement = 1
         self.dashing = 0
@@ -241,8 +271,6 @@ class Player(PhysicsEntity):
                 self.velocity.x = 0
             self.velocity.y = 0
             self.set_action("run" if mx else "idle")
-
-        pgdebug(f"dashing={self.dashing}")
 
     def _handle_motion_state(self):
         if self.collisions["down"]:
