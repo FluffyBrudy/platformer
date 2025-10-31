@@ -1,15 +1,15 @@
-from random import randint
 from typing import List
 import pygame
 from objects.cloud import CloudGroup
 from objects.particles import Particle
 from objects.entities import Enemy, Player
 from objects.projectile import Projectile
+from objects.sparks import Spark
 from objects.tilemap import Tilemap
-from pgdebug import Debug, pgdebug
+from pgdebug import Debug
 from utils.animation import Animation
 from utils.image_utils import load_image, load_images, load_key_images
-from constants import ASSETS_PATH, BASE_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import ASSETS_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from constants import TILE_SIZE
 from utils.math_utils import sign
 
@@ -46,7 +46,7 @@ class Game:
                 ASSETS_PATH / "background.png", (SCREEN_WIDTH, SCREEN_HEIGHT)
             ),
             "gun": load_image(ASSETS_PATH / "gun.png", (20, 10)),
-            "projectile": load_image(ASSETS_PATH / "projectile.png"),
+            "projectile": load_image(ASSETS_PATH / "projectile.png", 1.5),
             # player
             "player/idle": Animation(
                 load_images(
@@ -92,7 +92,7 @@ class Game:
 
         # tilemap
         self.tilemap = Tilemap(self, TILE_SIZE[0])
-        self.tilemap.load_tilemap_data(BASE_PATH / "mapdata.json")
+        self.tilemap.load_level(0)
 
         # camera
         self.scroll = pygame.math.Vector2(0, 0)
@@ -146,6 +146,7 @@ class Game:
 
     def update_enemy(self):
         player_pos = self.player.pos
+        dashing = self.player.dashing
         for enemy in self.enemies:
             enemy.update(self.dt, self.tilemap, (0, 0))
             dist = player_pos[0] - enemy.pos[0]
@@ -155,7 +156,7 @@ class Game:
             ):
                 enemy.walking = 0
                 enemy.flipped = dist < 0
-                if enemy.can_shoot():
+                if enemy.can_shoot() and not dashing:
                     proj_dir = (sign(dist) * 2, 0)
                     enemy.shoot_projectile(proj_dir)  # type:ignore
 
@@ -185,6 +186,7 @@ class Game:
         [enemy.render(self.screen, self.scroll) for enemy in self.enemies]
         Particle.draw_particles(self.screen, self.scroll)  # type:ignore
         Projectile.render_projectiles(self.screen, dt, self.scroll)  # type: ignore
+        Spark.render_sparks(self.screen, dt, self.scroll)  # type: ignore
         Debug.draw_all(self.screen)
 
     def run(self):

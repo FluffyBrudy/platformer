@@ -166,9 +166,15 @@ class Enemy(PhysicsEntity):
             movement = self.movement(tilemap, movement)
         super().update(dt, tilemap, movement=movement)
 
-        for projectile in self.projectiles.copy():
+        to_remove = []
+        for projectile in self.projectiles:
             if projectile.can_die(self.game.player):
-                projectile.remove(self.projectiles)
+                projectile.force_kill = True
+                to_remove.append(projectile)
+
+        for projectile in to_remove:
+            if projectile in self.projectiles:
+                self.projectiles.remove(projectile)
 
     def can_shoot(self):
         shootable = self.projectile_timer.has_reach_interval()

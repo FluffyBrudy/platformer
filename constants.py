@@ -2,7 +2,7 @@ from pathlib import Path
 from dataclasses import dataclass
 
 BASE_PATH = Path(__file__).parent
-ASSETS_PATH = BASE_PATH / "assets" / "data" / "images"
+ASSETS_PATH = BASE_PATH / "assets" / "images"
 
 
 FPS = 60
@@ -20,6 +20,7 @@ DASH_DECAY_THRESHOLD = 50
 JUMP_BASE = -3
 
 BASE_PROJECTILE_RANGE = 300
+PROJECTILE_SPEED_LIMIT = 0
 
 
 @dataclass

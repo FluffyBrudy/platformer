@@ -115,19 +115,21 @@ class Editor:
         self.notification_bar = NotificationBar(self.screen)
         self.keyboard_help = KeyboardHelp(pygame.font.SysFont(None, 25))
 
-        self.load()
+        self.load(0)
 
     def save(self):
         self.notification_bar.display_start("saving map data...")
         try:
-            self.tilemap.dump_mapdata(BASE_PATH / "mapdata.json")
+            self.tilemap.dump_mapdata()
             self.notification_bar.display_end("success")
         except json.JSONDecodeError:
             print("bad json chunks")
             self.notification_bar.display_end("parsing error")
 
-    def load(self):
-        data = self.tilemap.load_tilemap_data(BASE_PATH / "mapdata.json")
+    def load(self, map_id: int):
+        data = self.tilemap.load_tilemap_data(
+            BASE_PATH / "data" / "maps" / f"{map_id}.json"
+        )
         if not data:
             return
 

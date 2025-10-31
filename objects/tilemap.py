@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import (
     Dict,
     List,
+    Optional,
     Sequence,
     Tuple,
     Union,
@@ -11,7 +12,7 @@ from typing import (
 )
 from typing import TYPE_CHECKING
 import json
-from constants import SCREEN_HEIGHT, SCREEN_WIDTH, TILE_SIZE
+from constants import BASE_PATH, SCREEN_HEIGHT, SCREEN_WIDTH, TILE_SIZE
 
 
 if TYPE_CHECKING:
@@ -159,7 +160,7 @@ class Tilemap:
                     # pgdebug_rect(surface, (*tile_pos, self.tile_size, self.tile_size))
                     count += 1
 
-    def dump_mapdata(self, path: Path = Path("mapdata.json")):
+    def dump_mapdata(self, path: Optional[Path] = None):
         serialized_tilemap_data = {
             ",".join(map(str, k)): {
                 "ttype": v.ttype,
@@ -174,7 +175,14 @@ class Tilemap:
             [t.ttype, list(t.pos), t.variant, t.rotation] for t in self.offgrid_tiles
         ]
 
-        with open(path, "w") as fp:
+        if path is None:
+            default_loc = BASE_PATH / "data" / "maps"
+            if not default_loc.exists():
+                default_loc.mkdir(exist_ok=True, parents=True)
+            prefix = len(list(default_loc.iterdir()))
+            path = default_loc / f"{prefix}.json"
+
+        with open(cast(Path, path), "w") as fp:
             json.dump(
                 {
                     "tilemap": serialized_tilemap_data,
@@ -219,3 +227,6 @@ class Tilemap:
             print("Error parsing JSON file")
         except Exception as e:
             print(f"Unexpected error: {e}")
+
+    def load_level(self, map_id: int):
+        self.load_tilemap_data(BASE_PATH / "data" / "maps" / f"{map_id}.json")
