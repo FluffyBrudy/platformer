@@ -1,4 +1,4 @@
-from random import choice
+from random import choice, randint
 from typing import List, Set, Tuple, Union
 import pygame
 import math
@@ -41,7 +41,7 @@ class Spark:
         self.pos = list(pos)
         self.angle = angle
         self.speed = speed
-        self.color_index = 0
+        self.color_index = randint(0, len(SPARK_COLORS) - 1)
         Spark._all_sparks.add(self)
 
     def update(self, dt: float) -> bool:
@@ -79,7 +79,6 @@ class Spark:
     def render_sparks(
         cls, surf: "pygame.Surface", dt: float, offset: Tuple[int, int] = (0, 0)
     ):
-        print(len(cls._all_sparks))
         to_remove = []
         for spark in cls._all_sparks:
             if spark.update(dt):

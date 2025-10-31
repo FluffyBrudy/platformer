@@ -51,7 +51,7 @@ class Projectile:
         angle_shift = pi if sign(self.velocity.x) < 0 else 0
         for _ in range(8):
             pos = (
-                self.rect.centerx - proj_dir * self.rect.width * 5,
+                self.rect.centerx - proj_dir * self.rect.width * 3,
                 self.rect.centery,
             )
             Spark(pos, random() - 0.5 + angle_shift, 3 + random())

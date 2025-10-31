@@ -12,6 +12,8 @@ from typing import (
 )
 from typing import TYPE_CHECKING
 import json
+
+from pygame.typing import Point
 from constants import BASE_PATH, SCREEN_HEIGHT, SCREEN_WIDTH, TILE_SIZE
 
 
@@ -61,7 +63,7 @@ class Tilemap:
         self.offgrid_cull_min_pos = Vector2(-2 * TILE_SIZE[0], -2 * TILE_SIZE[1])
         self.offgrid_cull_max_pos = Vector2(SCREEN_WIDTH, SCREEN_HEIGHT)
 
-    def solid_tile_check(self, pos: Tuple[int, int]):
+    def solid_tile_check(self, pos: Tuple[float, float]):
         tile_loc_x = int(pos[0] // self.tile_size[0])
         tile_loc_y = int(pos[1] // self.tile_size[1])
         tile_loc = (tile_loc_x, tile_loc_y)

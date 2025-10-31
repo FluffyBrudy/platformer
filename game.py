@@ -1,3 +1,4 @@
+import math
 from typing import List
 import pygame
 from objects.cloud import CloudGroup
@@ -144,15 +145,28 @@ class Game:
                 if event.key == pygame.K_SPACE:
                     self.player.dash()
 
+    def tilex_range_check(self, a: float, b: float, common_y: float):
+        tile_size = self.tilemap.tile_size[0]
+        start_x = int(min(a, b) // tile_size) * tile_size
+        tile_count = math.ceil(abs(a - b) / tile_size)
+
+        for i in range(tile_count + 1):
+            x = start_x + i * tile_size
+            if self.tilemap.solid_tile_check((x, common_y)):
+                return False
+        return True
+
     def update_enemy(self):
         player_pos = self.player.pos
         dashing = self.player.dashing
         for enemy in self.enemies:
             enemy.update(self.dt, self.tilemap, (0, 0))
             dist = player_pos[0] - enemy.pos[0]
+
             if (
                 abs(dist) <= 200
                 and abs(enemy.pos[1] - self.player.pos[1]) <= TILE_SIZE[1] // 2
+                and self.tilex_range_check(player_pos[0], enemy.pos[0], enemy.pos[1])
             ):
                 enemy.walking = 0
                 enemy.flipped = dist < 0
