@@ -54,7 +54,7 @@ class Projectile:
                 self.rect.centerx - proj_dir * self.rect.width * 3 * reaction,
                 self.rect.centery,
             )
-            Spark(pos, random() - 0.5 + angle_shift + shift, 3 + random())
+            Spark(pos, random() - 0.5 + angle_shift + shift, 2 + random())
 
     def update(self, dt: float):
         movement_x = self.velocity.x * BASE_SPEED * dt
