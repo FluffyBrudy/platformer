@@ -47,9 +47,13 @@ class Projectile:
         Projectile._all_projectiles.add(self)
 
     def add_sparks(self):
+        proj_dir = sign(self.velocity.x)
         angle_shift = pi if sign(self.velocity.x) < 0 else 0
         for _ in range(8):
-            pos = self.rect.center
+            pos = (
+                self.rect.centerx - proj_dir * self.rect.width * 5,
+                self.rect.centery,
+            )
             Spark(pos, random() - 0.5 + angle_shift, 3 + random())
 
     def update(self, dt: float):
