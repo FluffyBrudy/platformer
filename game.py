@@ -166,7 +166,9 @@ class Game:
             if (
                 abs(dist) <= 200
                 and abs(enemy.pos[1] - self.player.pos[1]) <= TILE_SIZE[1] // 2
-                and self.tilex_range_check(player_pos[0], enemy.pos[0], enemy.pos[1])
+                and self.tilex_range_check(
+                    self.player.rect.right, enemy.pos[0], enemy.pos[1]
+                )
             ):
                 enemy.walking = 0
                 enemy.flipped = dist < 0

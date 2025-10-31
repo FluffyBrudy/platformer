@@ -46,15 +46,15 @@ class Projectile:
             group.append(self)
         Projectile._all_projectiles.add(self)
 
-    def add_sparks(self):
+    def add_sparks(self, shift: float = 0, reaction=1):
         proj_dir = sign(self.velocity.x)
         angle_shift = pi if sign(self.velocity.x) < 0 else 0
         for _ in range(8):
             pos = (
-                self.rect.centerx - proj_dir * self.rect.width * 3,
+                self.rect.centerx - proj_dir * self.rect.width * 3 * reaction,
                 self.rect.centery,
             )
-            Spark(pos, random() - 0.5 + angle_shift, 3 + random())
+            Spark(pos, random() - 0.5 + angle_shift + shift, 3 + random())
 
     def update(self, dt: float):
         movement_x = self.velocity.x * BASE_SPEED * dt
@@ -69,20 +69,26 @@ class Projectile:
         return not max(PROJECTILE_SPEED_LIMIT, self.range) or self.force_kill
 
     def can_die(self, sprite: "PhysicsEntity"):
-        base_kill_case = (self.range <= 0) or (
-            Projectile._game_instance.tilemap.solid_tile_check(self.rect.center)
-            is not None
-        )
+        base_kill_case = self.range <= 0
         if base_kill_case:
             self.add_sparks()
             return True
 
-        can_die = self.rect.colliderect(sprite.collision_rect)
+        wall_collide = Projectile._game_instance.tilemap.solid_tile_check(
+            self.rect.center
+        )
+        if wall_collide is not None:
+            left = wall_collide.pos[0] - self.rect.left
+            self.add_sparks(pi if left else 0, 0)
+            self.force_kill = True
+            return True
 
-        if sprite.rect.move(0, 0).colliderect(self.rect) or self.range <= 20:
+        if sprite.rect.colliderect(self.rect):
             self.add_sparks()
+            self.force_kill = True
+            return True
 
-        return can_die or self.force_kill
+        return False
 
     def render(self, surf: "Surface", offset: Tuple[int, int] = (0, 0)):
         if not (self.range <= 20):

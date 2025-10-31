@@ -169,7 +169,6 @@ class Enemy(PhysicsEntity):
         to_remove = []
         for projectile in self.projectiles:
             if projectile.can_die(self.game.player):
-                projectile.force_kill = True
                 to_remove.append(projectile)
 
         for projectile in to_remove:
