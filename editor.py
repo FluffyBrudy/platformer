@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, Literal, Optional, Tuple
 import pygame
 import json
@@ -10,6 +11,7 @@ from constants import (
     SCREEN_WIDTH,
     TILE_SIZE,
 )
+from filemanager import PygameFileManager
 from objects.tilemap import Tile, Tilemap
 from utils.image_utils import load_key_images
 from utils.editor_utils import sorted_pos_tuple
@@ -26,7 +28,7 @@ TTileTypes = Literal["grass", "stone", "decor", "largedecor", "enemy"]
 
 
 class Editor:
-    def __init__(self) -> None:
+    def __init__(self, path: Path) -> None:
         pygame.init()
 
         self.screen: pygame.Surface = pygame.display.set_mode(
@@ -115,21 +117,20 @@ class Editor:
         self.notification_bar = NotificationBar(self.screen)
         self.keyboard_help = KeyboardHelp(pygame.font.SysFont(None, 25))
 
-        self.load(0)
+        self.path = path
+        self.load(path)
 
     def save(self):
         self.notification_bar.display_start("saving map data...")
         try:
-            self.tilemap.dump_mapdata()
+            self.tilemap.dump_mapdata(self.path)
             self.notification_bar.display_end("success")
         except json.JSONDecodeError:
             print("bad json chunks")
             self.notification_bar.display_end("parsing error")
 
-    def load(self, map_id: int):
-        data = self.tilemap.load_tilemap_data(
-            BASE_PATH / "data" / "maps" / f"{map_id}.json"
-        )
+    def load(self, path: Path):
+        data = self.tilemap.load_tilemap_data(path)
         if not data:
             return
 
@@ -314,5 +315,7 @@ class Editor:
 
 
 if __name__ == "__main__":
-    editor = Editor()
-    editor.run()
+    filemanager = PygameFileManager().run()
+    if filemanager is not None:
+        editor = Editor(filemanager)
+        editor.run()

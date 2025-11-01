@@ -11,10 +11,17 @@ from objects.tilemap import Tilemap
 from pgdebug import Debug
 from utils.animation import Animation
 from utils.image_utils import load_image, load_images, load_key_images
-from constants import ASSETS_PATH, SCREEN_SHAKE, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import (
+    ASSETS_PATH,
+    SCREEN_CENTER,
+    SCREEN_SHAKE,
+    Color,
+    FPS,
+    SCREEN_HEIGHT,
+    SCREEN_WIDTH,
+)
 from constants import TILE_SIZE
 from utils.math_utils import sign
-from widget import NotificationBar
 
 
 class Game:
@@ -29,6 +36,10 @@ class Game:
 
         # screenshake effect
         self.screenshake = 0
+
+        # loading transition
+        self.transition_radius = 0
+        self.transition_speed = 15
 
         # game assets
         self.assets = {
@@ -97,15 +108,17 @@ class Game:
         self.level = 0
         self.tilemap = Tilemap(self, TILE_SIZE[0])
 
-        self.load_level()
+        self.load_level(0)
         Debug.change_font(25)
 
-    def load_level(self):
+    def load_level(self, level: int):
         # reset level data
-        self.tilemap.load_level(self.level)
+        self.tilemap.load_level(level)
 
         # safe resets
         self.screenshake = 0
+        self.transition_radius = 0
+
         self.dead = 0
         self.scroll = pygame.math.Vector2(0, 0)
         self.movement = [False, False]
@@ -119,6 +132,12 @@ class Game:
 
         self.spawn_leafs_rects()
         self.spawn_enemies()
+
+    def level_transition(self):
+        self.transition += 1
+        if self.transition > 30:
+            self.level += 1
+            self.load_level(self.level)
 
     def spawn_enemies(self):
         for enemy in self.tilemap.extract([("enemy", 1)], False):
@@ -213,7 +232,7 @@ class Game:
         if self.dead:
             self.dead += 1
             if self.dead >= 40:
-                self.load_level()
+                self.load_level(self.level)
 
     def camera_movement(self):
         target_scroll_x = self.player.rect.centerx - self.screen.width / 2
@@ -260,8 +279,21 @@ class Game:
             self.screen.blit(self.assets["background"], (shake, shake))
             self.handle_event()
             self.render()
+            self.circular_transition()
             pygame.display.flip()
         pygame.quit()
+
+    def circular_transition(self):
+        if self.transition_radius <= SCREEN_HEIGHT:
+            mask = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+            mask.fill((0, 0, 0, 255))
+            pygame.draw.circle(
+                mask, (0, 0, 0, 0), SCREEN_CENTER, self.transition_radius
+            )
+            self.screen.blit(mask, (0, 0))
+            self.transition_radius += (
+                max(SCREEN_WIDTH, SCREEN_HEIGHT) - self.transition_radius
+            ) * 0.05
 
 
 if __name__ == "__main__":

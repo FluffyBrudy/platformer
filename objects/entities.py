@@ -1,9 +1,8 @@
 from math import cos, pi, sin
 from random import choice, randint, random
 import pygame
-from typing import TYPE_CHECKING, List, Literal, Set, Tuple, Union
+from typing import TYPE_CHECKING, List, Literal, Tuple, Union
 
-from pygame.display import flip
 from constants import (
     BASE_DECAY_FACTOR,
     BASE_SPEED,
@@ -286,8 +285,16 @@ class Player(PhysicsEntity):
         abs_dash = abs(self.dashing)
         if not abs(self.dashing):
             return
+        particle = Particle(
+            self.game,
+            "dash",
+            self.collision_rect.midbottom,
+            (self.velocity.x / 8, self.velocity.y / 2),
+        )
+        particle.animation.change_frame(randint(0, 7))
+        Particle.add_particles(particle)
         if abs_dash > DASH_DECAY_THRESHOLD:
-            self.velocity[0] = sign(self.dashing) * BASE_SPEED * dt * DASH_SPEED_MULT
+            self.velocity[0] = sign(self.dashing) * 5
             if abs_dash == DASH_DECAY_THRESHOLD + 1:
                 self.velocity.x *= BASE_DECAY_FACTOR
         if (abs_dash - DASH_DECAY_THRESHOLD) <= -2:
