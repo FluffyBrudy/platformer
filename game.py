@@ -14,6 +14,7 @@ from utils.image_utils import load_image, load_images, load_key_images
 from constants import ASSETS_PATH, SCREEN_SHAKE, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from constants import TILE_SIZE
 from utils.math_utils import sign
+from widget import NotificationBar
 
 
 class Game:
@@ -92,27 +93,32 @@ class Game:
             ),
         }
 
-        # player
+        # tilemap
+        self.level = 0
+        self.tilemap = Tilemap(self, TILE_SIZE[0])
+
+        self.load_level()
+        Debug.change_font(25)
+
+    def load_level(self):
+        # reset level data
+        self.tilemap.load_level(self.level)
+
+        # safe resets
+        self.screenshake = 0
+        self.dead = 0
+        self.scroll = pygame.math.Vector2(0, 0)
+        self.movement = [False, False]
+        self.dt = 0
+
+        self.enemies = []
+        self.projectiles = []
+        self.clouds = CloudGroup(self.assets["clouds"])
+
         self.player = Player(self, (150, 50), self.assets["player"].size)
 
-        # tilemap
-        self.tilemap = Tilemap(self, TILE_SIZE[0])
-        self.tilemap.load_level(0)
-
-        # camera
-        self.scroll = pygame.math.Vector2(0, 0)
-
-        # cloud groups
-        self.clouds = CloudGroup(self.assets["clouds"])
-        self.enemies: List[Enemy] = []
-
-        # projectiles
-
-        # spawns
         self.spawn_leafs_rects()
         self.spawn_enemies()
-
-        Debug.change_font(25)
 
     def spawn_enemies(self):
         for enemy in self.tilemap.extract([("enemy", 1)], False):
@@ -201,8 +207,13 @@ class Game:
 
     def handle_project_player_collision(self):
         for projectile in Projectile.get_projectiles():
-            if projectile.entity_collision(self.player):
+            if projectile.entity_collision(self.player) and not self.player.dashing:
                 self.screenshake = SCREEN_SHAKE * 0.4
+                self.dead += 1
+        if self.dead:
+            self.dead += 1
+            if self.dead >= 40:
+                self.load_level()
 
     def camera_movement(self):
         target_scroll_x = self.player.rect.centerx - self.screen.width / 2
