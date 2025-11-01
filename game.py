@@ -133,12 +133,6 @@ class Game:
         self.spawn_leafs_rects()
         self.spawn_enemies()
 
-    def level_transition(self):
-        self.transition += 1
-        if self.transition > 30:
-            self.level += 1
-            self.load_level(self.level)
-
     def spawn_enemies(self):
         for enemy in self.tilemap.extract([("enemy", 1)], False):
             enemy = Enemy(self, enemy.pos, self.assets["player"].size)
@@ -248,6 +242,10 @@ class Game:
         dt = self.dt
 
         movement = (self.movement[1] - self.movement[0], 0)
+
+        if len(self.enemies) == 0:
+            self.level += 1
+            self.load_level(self.level)
         self.clouds.update(dt)
         self.player.update(dt, self.tilemap, movement)
         Particle.spawn_leafs(self, self.leaf_spawners)

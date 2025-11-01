@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable, Dict, Literal, Optional, Tuple
 import pygame
 import json
-from pygame import Event
+from pygame import Event, Surface
 from constants import (
     ASSETS_PATH,
     BASE_PATH,
@@ -13,7 +13,7 @@ from constants import (
 )
 from filemanager import PygameFileManager
 from objects.tilemap import Tile, Tilemap
-from utils.image_utils import load_key_images
+from utils.image_utils import load_image, load_key_images
 from utils.editor_utils import sorted_pos_tuple
 from widget import KeyboardHelp, NotificationBar
 
@@ -45,7 +45,7 @@ class Editor:
             "stone": load_key_images(ASSETS_PATH / "tiles" / "stone", 2),
             "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", 2),
             "largedecor": load_key_images(ASSETS_PATH / "tiles" / "large_decor", 2),
-            "enemy": load_key_images(ASSETS_PATH / "tiles" / "spawners", 2),
+            "enemy": {"1": load_image(ASSETS_PATH / "tiles" / "spawners" / "1.png", 2)},
         }
 
         # Tilemap
@@ -181,13 +181,22 @@ class Editor:
 
     def mouse_scroll(self, direction: Literal[1, -1]) -> None:
         self.tile_group = (self.tile_group + direction) % len(self.tilelist)
-        self.tile_variant = 0
+        current_key = self.tilelist[self.tile_group]
+        current_tile = self.assets[current_key]
+        self.tile_variant = self.possible_varient(current_tile, direction)
 
     def shift_and_scroll(self, direction: Literal[1, -1]) -> None:
         current_key = self.tilelist[self.tile_group]
         current_tile = self.assets[current_key]
-        variant_count = len(current_tile)
-        self.tile_variant = (self.tile_variant + direction) % variant_count
+        self.tile_variant = self.possible_varient(current_tile, direction)
+
+    def possible_varient(self, tiles: Dict[str, Surface], direction: int):
+        varient = (self.tile_variant + direction) % len(tiles)
+        if str(varient) not in tiles.keys():
+            min_varient = min(map(int, tiles.keys()))
+            return min_varient
+        else:
+            return varient
 
     def set_move(self, index: int, state: bool) -> None:
         self.movement[index] = state
