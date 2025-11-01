@@ -1,4 +1,5 @@
 import math
+from random import choice, random
 from typing import List
 import pygame
 from objects.cloud import CloudGroup
@@ -10,7 +11,7 @@ from objects.tilemap import Tilemap
 from pgdebug import Debug
 from utils.animation import Animation
 from utils.image_utils import load_image, load_images, load_key_images
-from constants import ASSETS_PATH, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
+from constants import ASSETS_PATH, SCREEN_SHAKE, Color, FPS, SCREEN_HEIGHT, SCREEN_WIDTH
 from constants import TILE_SIZE
 from utils.math_utils import sign
 
@@ -24,6 +25,9 @@ class Game:
 
         self.running = True
         self.movement = [False, False]
+
+        # screenshake effect
+        self.screenshake = 0
 
         # game assets
         self.assets = {
@@ -41,7 +45,7 @@ class Game:
                 load_images(ASSETS_PATH / "particles" / "leaf", 2.5), 0.05, False
             ),
             "particles/particle": Animation(
-                load_images(ASSETS_PATH / "particles" / "particle", 0.8), 0.05, False
+                load_images(ASSETS_PATH / "particles" / "particle", 1), 0.05, False
             ),
             "background": load_image(
                 ASSETS_PATH / "background.png", (SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -159,7 +163,7 @@ class Game:
     def update_enemy(self):
         player_pos = self.player.pos
         dashing = self.player.dashing
-        for enemy in self.enemies:
+        for enemy in self.enemies.copy():
             enemy.update(self.dt, self.tilemap, (0, 0))
             dist = player_pos[0] - enemy.pos[0]
 
@@ -175,10 +179,30 @@ class Game:
                 if enemy.can_shoot() and not dashing:
                     proj_dir = (sign(dist) * 2, 0)
                     enemy.shoot_projectile(proj_dir)  # type:ignore
+            if dashing and enemy.collision_rect.colliderect(self.player.rect):
+                self.screenshake = SCREEN_SHAKE
+                self.enemies.remove(enemy)
+                Spark(self.player.rect.center, 0, 10, (2, 0.5))
+                Spark(self.player.rect.center, math.pi, 10, (2, 0.5))
+                for _ in range(200):
+                    angle = random() * 2 * math.pi
+                    speed = 2 * random()
+                    Particle.add_particles(
+                        Particle(
+                            self,
+                            "dash",
+                            self.player.rect.center,
+                            (
+                                math.cos(angle + math.pi) * speed * 0.5,
+                                math.sin(angle + math.pi) * speed * 0.5,
+                            ),
+                        )
+                    )
 
     def handle_project_player_collision(self):
         for projectile in Projectile.get_projectiles():
-            projectile.entity_collision(self.player)
+            if projectile.entity_collision(self.player):
+                self.screenshake = SCREEN_SHAKE * 0.4
 
     def camera_movement(self):
         target_scroll_x = self.player.rect.centerx - self.screen.width / 2
@@ -192,28 +216,37 @@ class Game:
 
     def render(self):
         dt = self.dt
+
         movement = (self.movement[1] - self.movement[0], 0)
         self.clouds.update(dt)
         self.player.update(dt, self.tilemap, movement)
         Particle.spawn_leafs(self, self.leaf_spawners)
-        Particle.update_particles(dt)
         self.handle_project_player_collision()
+        Particle.update_particles(dt)
         self.update_enemy()
         self.camera_movement()
 
-        self.clouds.render(self.screen, offset=self.scroll)
-        self.tilemap.render(self.screen, offset=self.scroll)
-        self.player.render(self.screen, offset=self.scroll)
-        [enemy.render(self.screen, self.scroll) for enemy in self.enemies]
-        Particle.draw_particles(self.screen, self.scroll)  # type:ignore
-        Projectile.render_projectiles(self.screen, dt, self.scroll)  # type: ignore
-        Spark.render_sparks(self.screen, dt, self.scroll)  # type: ignore
+        sx = choice([1, -1])
+        shake = random() * self.screenshake - self.screenshake / 2
+        scroll = self.scroll + (shake * sx, shake * sx)
+
+        self.clouds.render(self.screen, offset=scroll)  # type:ignore
+        self.tilemap.render(self.screen, offset=scroll)  # type: ignore
+        self.player.render(self.screen, offset=scroll)  # type: ignore
+        [enemy.render(self.screen, scroll) for enemy in self.enemies]  # type: ignore
+        Projectile.render_projectiles(self.screen, dt, scroll)  # type: ignore
+        Spark.render_sparks(self.screen, dt, scroll)  # type: ignore
+        Particle.draw_particles(self.screen, scroll)  # type:ignore
         Debug.draw_all(self.screen)
 
     def run(self):
         while self.running:
+            shake = 0
             self.dt = self.clock.tick(FPS) / 1000.0
-            self.screen.blit(self.assets["background"], (0, 0))
+            if self.screenshake != 0:
+                shake = random() * self.screenshake - self.screenshake / 2
+                self.screenshake = max(0, self.screenshake - 1)
+            self.screen.blit(self.assets["background"], (shake, shake))
             self.handle_event()
             self.render()
             pygame.display.flip()

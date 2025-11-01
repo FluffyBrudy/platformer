@@ -289,7 +289,7 @@ class Player(PhysicsEntity):
         if abs_dash > DASH_DECAY_THRESHOLD:
             self.velocity[0] = sign(self.dashing) * BASE_SPEED * dt * DASH_SPEED_MULT
             if abs_dash == DASH_DECAY_THRESHOLD + 1:
-                self.velocity.x *= BASE_DECAY_FACTOR * 0.5
+                self.velocity.x *= BASE_DECAY_FACTOR
         if (abs_dash - DASH_DECAY_THRESHOLD) <= -2:
             angle = random() * 2 * pi
             speed = random() * 0.5 + 0.5
@@ -299,6 +299,7 @@ class Player(PhysicsEntity):
             )
             particle.animation.change_frame(randint(0, 7))
             Particle.add_particles(particle)
+        pgdebug(f"self.velocity.x={self.velocity.x}")
 
     def _handle_dash_friction(self):
         if self.dashing > 0:
