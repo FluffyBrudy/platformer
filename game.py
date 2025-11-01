@@ -176,6 +176,10 @@ class Game:
                     proj_dir = (sign(dist) * 2, 0)
                     enemy.shoot_projectile(proj_dir)  # type:ignore
 
+    def handle_project_player_collision(self):
+        for projectile in Projectile.get_projectiles():
+            projectile.entity_collision(self.player)
+
     def camera_movement(self):
         target_scroll_x = self.player.rect.centerx - self.screen.width / 2
         target_scroll_y = self.player.rect.centery - self.screen.height / 2
@@ -193,6 +197,7 @@ class Game:
         self.player.update(dt, self.tilemap, movement)
         Particle.spawn_leafs(self, self.leaf_spawners)
         Particle.update_particles(dt)
+        self.handle_project_player_collision()
         self.update_enemy()
         self.camera_movement()
 

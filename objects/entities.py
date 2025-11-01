@@ -156,7 +156,6 @@ class Enemy(PhysicsEntity):
         super().__init__(game, "enemy", pos, size)
         self.walking = 0
         self.flipped = choice((True, False))
-        self.projectiles: List["Projectile"] = []
         self.projectile_timer = Timer(200)
 
     def update(
@@ -165,15 +164,6 @@ class Enemy(PhysicsEntity):
         if self.collisions["down"]:
             movement = self.movement(tilemap, movement)
         super().update(dt, tilemap, movement=movement)
-
-        to_remove = []
-        for projectile in self.projectiles:
-            if projectile.can_die(self.game.player):
-                to_remove.append(projectile)
-
-        for projectile in to_remove:
-            if projectile in self.projectiles:
-                self.projectiles.remove(projectile)
 
     def can_shoot(self):
         shootable = self.projectile_timer.has_reach_interval()
@@ -187,8 +177,9 @@ class Enemy(PhysicsEntity):
         if self.flipped:
             gun_surf = pygame.transform.flip(gun_surf, True, False)
             gun_pos = (gun_pos[0] - gun_surf.width, gun_pos[1])
+
         projectile = Projectile(self.game, gun_pos, velocity)
-        self.projectiles.append(projectile)
+        projectile.add_sparks(scaler_change=(2, 0.5), count=4)
 
     def movement(self, tilemap: "Tilemap", movement: Tuple[float, float]):
         w = self.animation.get_frame().width

@@ -1,8 +1,9 @@
+from math import pi, sin
 from random import choice, random
 from typing import TYPE_CHECKING, List, Literal, Sequence, Tuple
 from pygame import Rect, Surface, Vector2
+import pygame
 from constants import BASE_SPEED, TILE_SIZE
-from utils.math_utils import natural_x
 
 if TYPE_CHECKING:
     from game import Game
@@ -57,13 +58,14 @@ class Particle:
 
     @classmethod
     def spawn_leafs(cls, game: "Game", rects: Sequence[Rect]):
+        dv = random() - 0.5
         for rect in rects:
             if random() * 49999 < rect.width * rect.height:
                 pos = (
-                    int(rect.x + random() * rect.width),
-                    int(rect.y + random() * rect.height),
+                    int(rect.right + dv * rect.width // 2),
+                    int(rect.centery),
                 )
-                leaf = cls(game, "leaf", pos, (0, 0.3))
+                leaf = Particle(game, "leaf", pos, (0, 0.3))
                 cls.leaf_group.append(leaf)
 
     @classmethod
@@ -76,9 +78,7 @@ class Particle:
         if not cls.leaf_group:
             return
 
-        arb_leafanim = cls.leaf_group[0].animation
-        noise = natural_x(arb_leafanim.frame_index, arb_leafanim.frameslen, 1)
-
+        noise = sin(pygame.time.get_ticks())
         for leaf in cls.leaf_group:
             leaf.pos[0] += noise  # type: ignore
 
