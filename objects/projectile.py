@@ -60,6 +60,7 @@ class Projectile:
         count=8,
         scaler_change: Point = (0, 0),
     ):
+        self._game_instance.soundmanager.play_sfx("hit")
         base_angle = pi if sign(self.velocity.x) < 0 else 0
         add_sparks(
             self.rect.center, (base_angle + shift), displacement, count, scaler_change

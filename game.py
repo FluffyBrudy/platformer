@@ -10,8 +10,9 @@ from objects.sparks import Spark
 from objects.tilemap import Tilemap
 from pgdebug import Debug
 import pgdebug
+from soundmanager import SoundManager
 from utils.animation import Animation
-from utils.effect_utils import add_sparks, radial_sparks
+from utils.effect_utils import radial_sparks
 from utils.image_utils import load_image, load_images, load_key_images
 from constants import (
     ASSETS_PATH,
@@ -29,6 +30,8 @@ from utils.math_utils import polar_to_cartesian, sign
 class Game:
     def __init__(self):
         pygame.init()
+        pygame.mixer.init()
+
         self.screen = pygame.display.set_mode(
             (SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA
         )
@@ -109,6 +112,8 @@ class Game:
             ),
         }
 
+        self.soundmanager = SoundManager()
+
         # tilemap
         self.level = 0
         self.tilemap = Tilemap(self, TILE_SIZE[0])
@@ -170,8 +175,10 @@ class Game:
                     self.movement[1] = False
                 if event.key == pygame.K_UP:
                     self.player.jump(self.dt, energy=0)
+                    self.soundmanager.play_sfx("jump")
                 if event.key == pygame.K_SPACE:
                     self.player.dash()
+                    self.soundmanager.play_sfx("dash")
 
     def tilex_range_check(self, a: float, b: float, common_y: float):
         tile_size = self.tilemap.tile_size[0]
@@ -204,9 +211,12 @@ class Game:
                 if enemy.can_shoot() and not dashing:
                     proj_dir = (sign(dist) * 2, 0)
                     enemy.shoot_projectile(proj_dir)  # type:ignore
+                    self.soundmanager.play_sfx("shoot")
+
             if dashing and enemy.collision_rect.colliderect(self.player.rect):
                 self.screenshake = SCREEN_SHAKE
                 self.enemies.remove(enemy)
+                self.soundmanager.play_sfx("hit")
                 radial_sparks(
                     self.player.rect.center,
                     3,
@@ -230,6 +240,7 @@ class Game:
     def handle_project_player_collision(self):
         for projectile in Projectile.get_projectiles():
             if projectile.entity_collision(self.player) and not self.player.dashing:
+                self.soundmanager.play_sfx("hit")
                 self.screenshake = SCREEN_SHAKE * 0.4
                 self.dead += 1
         if self.dead:
