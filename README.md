@@ -8,4 +8,6 @@ platformer game made  with python
 ```bash
 python3 -m PyInstaller game.py --noconsole --add-data "assets:assets" --add-data "data:data"                                                                                                                                                                                 
 ```
-**exe file for window may be under dist/ if not check under game/**
+**exe file for window/linux may be under dist/ if not check under game/**
+
+
