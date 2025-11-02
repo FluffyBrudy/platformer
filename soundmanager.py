@@ -3,7 +3,7 @@ import pygame
 from constants import BASE_PATH
 
 
-TSfxType = Literal["dash", "hit", "jump", "shoot"]
+TSfxType = Literal["dash", "hit", "jump", "shoot", "ambience", "music"]
 
 
 class SoundManager:
@@ -12,16 +12,21 @@ class SoundManager:
     def __init__(self) -> None:
         sfx_path = BASE_PATH / "assets" / "sfx"
         self.sounds: Dict[TSfxType, pygame.Sound] = {
+            "music": pygame.mixer.Sound(sfx_path / "ambience.wav"),
+            "ambience": pygame.mixer.Sound(sfx_path / "ambience.wav"),
             "dash": pygame.mixer.Sound(sfx_path / "dash.wav"),
             "shoot": pygame.mixer.Sound(sfx_path / "shoot.wav"),
             "jump": pygame.mixer.Sound(sfx_path / "jump.wav"),
             "hit": pygame.mixer.Sound(sfx_path / "hit.wav"),
         }
-        self.channels = [pygame.Channel(i) for i in range(5)]
+        self.channels = [pygame.Channel(i) for i in range(7)]
         for channel in self.channels:
             channel.set_volume(1)
+        self.next_channel = 2
 
-        self.next_channel = 1
+    def play_main_channels(self):
+        self.channels[0].play(self.sounds["ambience"])
+        self.channels[1].play(self.sounds["music"])
 
     def play_sfx(self, sfx_type: TSfxType):
         try:
@@ -32,6 +37,6 @@ class SoundManager:
                 free_channel = self.channels[self.next_channel]
                 free_channel.stop()
             free_channel.play(self.sounds[sfx_type])
-            self.next_channel = max(1, (self.next_channel + 1) % len(self.channels))
+            self.next_channel = max(2, (self.next_channel + 1) % len(self.channels))
         except pygame.error as e:
             print(e)

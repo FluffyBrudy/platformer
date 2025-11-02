@@ -112,8 +112,6 @@ class Game:
             ),
         }
 
-        self.soundmanager = SoundManager()
-
         # tilemap
         self.level = 0
         self.tilemap = Tilemap(self, TILE_SIZE[0])
@@ -122,10 +120,10 @@ class Game:
         Debug.change_font(25)
 
     def load_level(self, level: int):
-        # reset level data
         self.tilemap.load_level(level)
+        self.soundmanager = SoundManager()
+        self.soundmanager.play_main_channels()
 
-        # safe resets
         self.screenshake = 0
         self.transition_radius = 0
 
