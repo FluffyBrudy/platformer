@@ -1,4 +1,7 @@
+from math import cos, sin
 from typing import Union
+
+from pygame.typing import Point
 
 
 def sign(n: Union[float, int]):
@@ -23,4 +26,10 @@ def is_closer(
     return abs(a - b) <= abs(threshold)
 
 
-print(is_closer(51, 51, -2))
+def polar_to_cartesian(
+    angle: float, scalar: float, scale: float = 1, center: Point = (0, 0)
+):
+    return (
+        center[0] + cos(angle) * scalar * scale,
+        center[1] + sin(angle) * scalar * scale,
+    )

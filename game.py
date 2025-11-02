@@ -10,6 +10,7 @@ from objects.sparks import Spark
 from objects.tilemap import Tilemap
 from pgdebug import Debug
 from utils.animation import Animation
+from utils.effect_utils import add_sparks, radial_sparks
 from utils.image_utils import load_image, load_images, load_key_images
 from constants import (
     ASSETS_PATH,
@@ -21,7 +22,7 @@ from constants import (
     SCREEN_WIDTH,
 )
 from constants import TILE_SIZE
-from utils.math_utils import sign
+from utils.math_utils import polar_to_cartesian, sign
 
 
 class Game:
@@ -201,8 +202,14 @@ class Game:
             if dashing and enemy.collision_rect.colliderect(self.player.rect):
                 self.screenshake = SCREEN_SHAKE
                 self.enemies.remove(enemy)
-                Spark(self.player.rect.center, 0, 10, (2, 0.5))
-                Spark(self.player.rect.center, math.pi, 10, (2, 0.5))
+                radial_sparks(
+                    self.player.rect.center,
+                    3,
+                    parts=12,
+                    displacement=(0, 0),
+                    scale_delta=(-1, -0.25),
+                )
+
                 for _ in range(200):
                     angle = random() * 2 * math.pi
                     speed = 2 * random()
@@ -211,10 +218,7 @@ class Game:
                             self,
                             "dash",
                             self.player.rect.center,
-                            (
-                                math.cos(angle + math.pi) * speed * 0.5,
-                                math.sin(angle + math.pi) * speed * 0.5,
-                            ),
+                            polar_to_cartesian(angle, speed, 0.5),
                         )
                     )
 

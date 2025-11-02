@@ -6,6 +6,7 @@ from math import hypot, pi
 from pygame.typing import Point
 from constants import BASE_PROJECTILE_RANGE, BASE_SPEED, PROJECTILE_SPEED_LIMIT
 from objects.sparks import Spark
+from utils.effect_utils import add_sparks
 from utils.math_utils import sign
 
 if TYPE_CHECKING:
@@ -55,19 +56,14 @@ class Projectile:
     def add_sparks(
         self,
         shift: float = 0,
-        d: Point = (0, 0),
+        displacement: Point = (0, 0),
         count=8,
         scaler_change: Point = (0, 0),
     ):
-        angle_shift = pi if sign(self.velocity.x) < 0 else 0
-        for _ in range(count):
-            pos = (
-                self.rect.centerx + d[0],
-                self.rect.centery + d[0],
-            )
-            Spark(
-                pos, random() - 0.5 + angle_shift + shift, 2 + random(), scaler_change
-            )
+        base_angle = pi if sign(self.velocity.x) < 0 else 0
+        add_sparks(
+            self.rect.center, (base_angle + shift), displacement, count, scaler_change
+        )
 
     def update(self, dt: float):
         movement_x = self.velocity.x * BASE_SPEED * dt
