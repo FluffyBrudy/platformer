@@ -62,6 +62,7 @@ class Tilemap:
         self.offgrid_tiles: List[Tile] = []
         self.offgrid_cull_min_pos = Vector2(-2 * TILE_SIZE[0], -2 * TILE_SIZE[1])
         self.offgrid_cull_max_pos = Vector2(SCREEN_WIDTH, SCREEN_HEIGHT)
+        self.bottom_y_pos = 0
 
     def solid_tile_check(self, pos: Tuple[float, float]):
         tile_loc_x = int(pos[0] // self.tile_size[0])
@@ -232,3 +233,6 @@ class Tilemap:
 
     def load_level(self, map_id: int):
         self.load_tilemap_data(BASE_PATH / "data" / "maps" / f"{map_id}.json")
+        if self.tilemap:
+            bottommost_tile_y = max(y for _, y in self.tilemap.keys())
+            self.bottom_y_pos = (bottommost_tile_y + 1) * self.tile_size[1]

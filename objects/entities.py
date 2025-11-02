@@ -249,7 +249,7 @@ class Player(PhysicsEntity):
         if self.wallslide:
             self.velocity.y = min(self.velocity.y, 1.1)
             if (self.prev_movement, mx) in ((-1, 1), (1, -1)):
-                self._wall_jump(dt)
+                self._wall_jump(2)
 
         if mx and self.prev_movement != mx:
             self.prev_movement = mx
@@ -257,7 +257,7 @@ class Player(PhysicsEntity):
         self._handle_motion_state()
         self._handle_velocity_resistance()
         self._handle_dash_friction()
-        self._handle_dash(dt)
+        self._handle_dash()
 
         # just for correction
         if self.collisions["down"]:
@@ -281,7 +281,7 @@ class Player(PhysicsEntity):
         elif self.velocity.x > 0:
             self.velocity.x = max(self.velocity.x - BASE_DECAY_FACTOR, 0)
 
-    def _handle_dash(self, dt: float):
+    def _handle_dash(self):
         abs_dash = abs(self.dashing)
         if not abs(self.dashing):
             return
@@ -316,8 +316,8 @@ class Player(PhysicsEntity):
         if self.collisions["left"] or self.collisions["right"]:
             self.dashing = 0
 
-    def _wall_jump(self, dt: float, speed_scale: float = 1.0):
-        self.velocity.x = -self.prev_movement * BASE_SPEED * dt * speed_scale
+    def _wall_jump(self, speed_scale: float = 1.0):
+        self.velocity.x = -self.prev_movement * speed_scale
         self.wallslide = False
         self.velocity.y = -3
 
@@ -328,7 +328,7 @@ class Player(PhysicsEntity):
             self.set_action("jump")
             self.velocity.y = JUMP_BASE - abs(energy)  # type: ignore
         if self.wallslide:
-            self._wall_jump(dt, 2.0)
+            self._wall_jump(2.0)
 
     def dash(self):
         if self.dashing > 1 or (self.collisions["left"] or self.collisions["right"]):

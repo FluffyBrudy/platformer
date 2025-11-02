@@ -253,6 +253,9 @@ class Game:
                 self.soundmanager.play_sfx("hit")
                 self.screenshake = SCREEN_SHAKE * 0.4
                 self.dead += 1
+        if self.player.pos[1] > self.tilemap.bottom_y_pos:
+            if self.player.pos[1] > self.tilemap.bottom_y_pos + 10 * TILE_SIZE[1]:
+                self.dead += 1
         if self.dead:
             self.dead += 1
             if self.dead >= 40:
