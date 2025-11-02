@@ -322,7 +322,7 @@ class Player(PhysicsEntity):
         self.velocity.y = -3
 
     def jump(
-        self, dt: float, energy=0.0, force_jump=True
+        self, dt: float, energy=0.0, force_jump=False
     ):  # TODO: remove force jump or set to false
         if self.collisions["down"] or force_jump:
             self.set_action("jump")
