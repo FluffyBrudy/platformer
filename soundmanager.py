@@ -25,8 +25,8 @@ class SoundManager:
         self.next_channel = 2
 
     def play_main_channels(self):
-        self.channels[0].play(self.sounds["ambience"])
-        self.channels[1].play(self.sounds["music"])
+        self.channels[0].play(self.sounds["ambience"], loops=-1)
+        self.channels[1].play(self.sounds["music"], loops=-1)
 
     def play_sfx(self, sfx_type: TSfxType):
         try:

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 TEventMapKey = Tuple[int, Optional[int]]
 TEventMapValue = Callable[[Event], None]
 TEventMapType = Dict[TEventMapKey, TEventMapValue]
-TTileTypes = Literal["grass", "stone", "decor", "largedecor", "enemy"]
+TTileTypes = Literal["grass", "stone", "decor", "largedecor", "enemy", "player"]
 
 
 class Editor:
@@ -46,6 +46,9 @@ class Editor:
             "decor": load_key_images(ASSETS_PATH / "tiles" / "decor", 2),
             "largedecor": load_key_images(ASSETS_PATH / "tiles" / "large_decor", 2),
             "enemy": {"1": load_image(ASSETS_PATH / "tiles" / "spawners" / "1.png", 2)},
+            "player": {
+                "0": load_image(ASSETS_PATH / "tiles" / "spawners" / "0.png", 2)
+            },
         }
 
         # Tilemap
@@ -107,6 +110,7 @@ class Editor:
             (pygame.KEYDOWN, pygame.K_t): lambda e: self.autotile(),
             (pygame.KEYDOWN, pygame.K_s): lambda e: self.handle_hotkey(e.key),
             (pygame.KEYDOWN, pygame.K_h): lambda e: self.keyboard_help.toggle(),
+            (pygame.KEYDOWN, pygame.K_c): lambda e: self.clear_tiles(),
         }
 
         # Global mouse pos
@@ -124,15 +128,19 @@ class Editor:
         self.notification_bar.display_start("saving map data...")
         try:
             self.tilemap.dump_mapdata(self.path)
-            self.notification_bar.display_end("success")
+            self.notification_bar.display_start("success")
         except json.JSONDecodeError:
             print("bad json chunks")
-            self.notification_bar.display_end("parsing error")
+            self.notification_bar.display_start("parsing error")
 
     def load(self, path: Path):
         data = self.tilemap.load_tilemap_data(path)
         if not data:
             return
+
+    def clear_tiles(self):
+        self.tilemap.tilemap = {}
+        self.tilemap.offgrid_tiles = []
 
     def autotile(self):
         for loc in self.tilemap.tilemap:

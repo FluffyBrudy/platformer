@@ -16,6 +16,7 @@ from utils.effect_utils import radial_sparks
 from utils.image_utils import load_image, load_images, load_key_images
 from constants import (
     ASSETS_PATH,
+    BASE_PATH,
     SCREEN_CENTER,
     SCREEN_SHAKE,
     Color,
@@ -25,6 +26,7 @@ from constants import (
 )
 from constants import TILE_SIZE
 from utils.math_utils import polar_to_cartesian, sign
+from widget import NotificationBar
 
 
 class Game:
@@ -113,13 +115,19 @@ class Game:
         }
 
         # tilemap
-        self.level = 0
+        self.level = 2
+        self.max_level = len(list((BASE_PATH / "data" / "maps").iterdir()))
         self.tilemap = Tilemap(self, TILE_SIZE[0])
 
-        self.load_level(0)
+        # notification
+        self.notification = NotificationBar(self.screen)
+
+        self.load_level(self.level)
         Debug.change_font(25)
 
     def load_level(self, level: int):
+        self.notification.notify(f"L E V E L: {self.level}")
+
         self.tilemap.load_level(level)
         self.soundmanager = SoundManager()
         self.soundmanager.play_main_channels()
@@ -136,7 +144,11 @@ class Game:
         self.projectiles = []
         self.clouds = CloudGroup(self.assets["clouds"])
 
-        self.player = Player(self, (150, 50), self.assets["player"].size)
+        player_tile = self.tilemap.extract([("player", 0)], keep=False)
+        player_pos = (0, 0)
+        if player_tile:
+            player_pos = player_tile[0].pos
+        self.player = Player(self, player_pos, self.assets["player"].size)
 
         self.spawn_leafs_rects()
         self.spawn_enemies()
@@ -263,7 +275,12 @@ class Game:
 
         if len(self.enemies) == 0:
             self.level += 1
-            self.load_level(self.level)
+            if self.level < self.max_level:
+                self.load_level(self.level)
+            elif not getattr(self, "notification_pause", False):
+                self.notification_pause = True
+                self.notification.notify(f"MAX LEVEL REACHED", True)
+
         self.clouds.update(dt)
         self.player.update(dt, self.tilemap, movement)
         Particle.spawn_leafs(self, self.leaf_spawners)
@@ -304,20 +321,20 @@ class Game:
             self.handle_event()
             self.render()
             self.circular_transition()
+            self.notification.draw()
             pygame.display.flip()
         pygame.quit()
 
     def circular_transition(self):
-        if self.transition_radius <= SCREEN_HEIGHT:
+        if self.transition_radius < SCREEN_HEIGHT:
             mask = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
             mask.fill((0, 0, 0, 255))
             pygame.draw.circle(
                 mask, (0, 0, 0, 0), SCREEN_CENTER, self.transition_radius
             )
             self.screen.blit(mask, (0, 0))
-            self.transition_radius += (
-                max(SCREEN_WIDTH, SCREEN_HEIGHT) - self.transition_radius
-            ) * 0.05
+            self.transition_radius += self.transition_speed
+            self.transition_radius = min(SCREEN_HEIGHT, self.transition_radius)
 
 
 if __name__ == "__main__":

@@ -3,68 +3,116 @@ from pygame import Surface
 from constants import SCREEN_HEIGHT, SCREEN_WIDTH, Color
 
 
-class NotificationBar:
+import pygame
+from pygame import Surface
+
+import pygame
+from pygame import Surface
+
+
+class Notification:
     def __init__(
-        self, screen: Surface, font_size=28, height=50, fade_ms=1000, slide_ms=300
+        self, message, alive=False, font=None, fade_ms=1000, slide_ms=300, hold_ms=1500
     ):
-        self.screen = screen
-        self.width = screen.get_width()
-        self.height = height
-        self.font = pygame.font.SysFont(None, font_size)
+        self.message = message
+        self.alive = alive
+        self.font = font or pygame.font.SysFont(None, 28)
         self.fade_ms = fade_ms
         self.slide_ms = slide_ms
-
-        self.message = ""
-        self.active = False
-        self.alpha = 0
-        self.start_time = 0
-        self.fade_start = 0
-        self.y_offset = -self.height
-
-        self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-
-    def display_start(self, message: str):
-        self.message = message
-        self.active = True
-        self.start_time = pygame.time.get_ticks()
-        self.fade_start = 0
+        self.hold_ms = hold_ms
         self.alpha = 255
-        self.y_offset = -self.height
+        self.y_offset = -60
+        self.phase = "slide"
+        self.start_time = pygame.time.get_ticks()
+        self.surface = None
+        self.render_surface()
 
-    def display_end(self, msg=""):
-        self.message = msg
-        self.fade_start = pygame.time.get_ticks()
+    def render_surface(self):
+        text_surf = self.font.render(self.message, True, (255, 255, 255))
+        text_rect = text_surf.get_rect()
+        width, height = text_rect.width + 40, text_rect.height + 20
 
-    def ease_out_cubic(self, t: float):
+        surf = pygame.Surface((width, height), pygame.SRCALPHA)
+        bar_color = (30, 30, 30, self.alpha)
+        glow_color = (255, 200, 50, int(self.alpha * 0.2))
+        pygame.draw.rect(surf, bar_color, (0, 0, width, height), border_radius=8)
+        glow = pygame.Surface((width, height), pygame.SRCALPHA)
+        glow.fill(glow_color)
+        surf.blit(glow, (0, 0))
+        text_rect.center = (width // 2, height // 2)
+        surf.blit(text_surf, text_rect)
+        self.surface = surf
+
+    def ease_out_cubic(self, t):
         return 1 - pow(1 - t, 3)
 
-    def draw(self):
-        if not self.active:
-            return
-
+    def update(self):
         now = pygame.time.get_ticks()
-
         elapsed = now - self.start_time
-        t = min(elapsed / self.slide_ms, 1)
-        self.y_offset = -self.height + self.ease_out_cubic(t) * self.height
 
-        if self.fade_start > 0:
-            fade_elapsed = now - self.fade_start
-            if fade_elapsed >= self.fade_ms:
-                self.active = False
-                return
-            self.alpha = int(255 * (1 - fade_elapsed / self.fade_ms))
+        if self.phase == "slide":
+            t = min(elapsed / self.slide_ms, 1)
+            self.y_offset = -60 + self.ease_out_cubic(t) * 60
+            if t >= 1:
+                self.phase = "hold"
+                self.start_time = now
 
-        self.surface.fill((30, 30, 30, self.alpha))
-        glow = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
-        glow.fill((255, 200, 50, int(self.alpha * 0.2)))
-        self.surface.blit(glow, (0, 0))
+        elif self.phase == "hold":
+            self.y_offset = 0
+            if not self.alive and elapsed >= self.hold_ms:
+                self.phase = "fade"
+                self.start_time = now
 
-        text_surf = self.font.render(self.message, True, (255, 255, 255))
-        text_rect = text_surf.get_rect(center=(self.width // 2, self.height // 2))
-        self.surface.blit(text_surf, text_rect)
+        elif self.phase == "fade":
+            fade_elapsed = min(elapsed / self.fade_ms, 1)
+            self.alpha = int(255 * (1 - fade_elapsed))
+            if fade_elapsed >= 1:
+                return False
 
-        self.screen.blit(self.surface, (0, int(self.y_offset)))
+        self.render_surface()
+        return True
+
+    def draw(self, screen, pos):
+        if not self.surface:
+            return
+        surf = self.surface.copy()
+        surf.set_alpha(self.alpha)
+        screen.blit(surf, (pos[0], pos[1] + int(self.y_offset)))
+
+
+class NotificationBar:
+    def __init__(self, screen: Surface):
+        self.screen = screen
+        self.notifications = []
+        self.max_notifications = 4
+
+    def notify(self, message: str, alive=False):
+        note = Notification(message, alive=alive)
+        self.notifications.append(note)
+
+        non_alive = [n for n in self.notifications if not n.alive]
+        alive_notes = [n for n in self.notifications if n.alive]
+
+        if len(non_alive) > self.max_notifications:
+            non_alive = non_alive[-self.max_notifications :]
+
+        self.notifications = alive_notes + non_alive
+
+    def remove(self, message: str):
+        self.notifications = [
+            n for n in self.notifications if not (n.message == message and n.alive)
+        ]
+
+    def draw(self):
+        alive_notes = []
+        y = 10
+        for n in self.notifications:
+            still_alive = n.update()
+            n.draw(self.screen, (10, y))
+            y += n.surface.get_height() + 10
+            if still_alive or n.alive:
+                alive_notes.append(n)
+        self.notifications = alive_notes
 
 
 class KeyboardHelp:
