@@ -115,7 +115,7 @@ class Game:
         }
 
         # tilemap
-        self.level = 2
+        self.level = 0
         self.max_level = len(list((BASE_PATH / "data" / "maps").iterdir()))
         self.tilemap = Tilemap(self, TILE_SIZE[0])
 
