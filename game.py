@@ -9,6 +9,7 @@ from objects.projectile import Projectile
 from objects.sparks import Spark
 from objects.tilemap import Tilemap
 from pgdebug import Debug
+import pgdebug
 from utils.animation import Animation
 from utils.effect_utils import add_sparks, radial_sparks
 from utils.image_utils import load_image, load_images, load_key_images
@@ -28,7 +29,10 @@ from utils.math_utils import polar_to_cartesian, sign
 class Game:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.screen = pygame.display.set_mode(
+            (SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA
+        )
+        self.offscreen = pygame.Surface(self.screen.size, pygame.SRCALPHA)
         self.clock = pygame.Clock()
         self.dt = 0
 
@@ -189,6 +193,7 @@ class Game:
 
             if (
                 abs(dist) <= 200
+                and abs(dist) >= TILE_SIZE[0] // 2
                 and abs(enemy.pos[1] - self.player.pos[1]) <= TILE_SIZE[1] // 2
                 and self.tilex_range_check(
                     self.player.rect.right, enemy.pos[0], enemy.pos[1]
@@ -262,14 +267,22 @@ class Game:
         shake = random() * self.screenshake - self.screenshake / 2
         scroll = self.scroll + (shake * sx, shake * sx)
 
-        self.clouds.render(self.screen, offset=scroll)  # type:ignore
-        self.tilemap.render(self.screen, offset=scroll)  # type: ignore
-        self.player.render(self.screen, offset=scroll)  # type: ignore
-        [enemy.render(self.screen, scroll) for enemy in self.enemies]  # type: ignore
-        Projectile.render_projectiles(self.screen, dt, scroll)  # type: ignore
-        Spark.render_sparks(self.screen, dt, scroll)  # type: ignore
-        Particle.draw_particles(self.screen, scroll)  # type:ignore
-        Debug.draw_all(self.screen)
+        self.offscreen.fill((0, 0, 0, 0))
+        self.clouds.render(self.offscreen, offset=scroll)  # type:ignore
+        self.tilemap.render(self.offscreen, offset=scroll)  # type: ignore
+        self.player.render(self.offscreen, offset=scroll)  # type: ignore
+        [enemy.render(self.offscreen, scroll) for enemy in self.enemies]  # type: ignore
+        Projectile.render_projectiles(self.offscreen, dt, scroll)  # type: ignore
+        Spark.render_sparks(self.offscreen, dt, scroll)  # type: ignore
+        Particle.draw_particles(self.offscreen, scroll)  # type:ignore
+        Debug.draw_all(self.offscreen)
+
+        subsurf = self.offscreen.subsurface((0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+        mask = pygame.mask.from_surface(subsurf)
+        shadow_surf = mask.to_surface(setcolor=(0, 0, 0, 120), unsetcolor=(0, 0, 0, 0))
+        self.screen.blit(shadow_surf, (2, 3))
+        self.screen.blit(shadow_surf, (-2, -2))
+        self.screen.blit(self.offscreen, (0, 0))
 
     def run(self):
         while self.running:
