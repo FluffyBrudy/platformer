@@ -5,7 +5,6 @@ import json
 from pygame import Event, Surface
 from constants import (
     ASSETS_PATH,
-    BASE_PATH,
     Color,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
@@ -125,13 +124,13 @@ class Editor:
         self.load(path)
 
     def save(self):
-        self.notification_bar.display_start("saving map data...")
+        self.notification_bar.notify("saving map data...")
         try:
             self.tilemap.dump_mapdata(self.path)
-            self.notification_bar.display_start("success")
+            self.notification_bar.notify("success")
         except json.JSONDecodeError:
             print("bad json chunks")
-            self.notification_bar.display_start("parsing error")
+            self.notification_bar.notify("parsing error")
 
     def load(self, path: Path):
         data = self.tilemap.load_tilemap_data(path)
